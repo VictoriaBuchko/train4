@@ -1,0 +1,33 @@
+﻿.station-item {
+    border-left: 4px solid #007bff;
+    transition: all 0.3s ease;
+}
+
+    .station-item:hover {
+        border-left-color: #0056b3;
+        transform: translateX(5px);
+    }
+
+.route-arrow {
+    text-align: center;
+    color: #6c757d;
+    font-size: 1.2em;
+    margin: 10px 0;
+}
+
+.drag-handle {
+    cursor: move;
+    user-select: none;
+}
+
+.station-order {
+    background: #007bff;
+    color: white;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}

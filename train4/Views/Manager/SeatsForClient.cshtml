@@ -1,0 +1,632 @@
+﻿@model List<train2.Models.Seat>
+@{
+    ViewData["Title"] = "Вибір місця для клієнта";
+    var seatsData = ViewBag.SeatsData as List<Dictionary<string, object>>;
+    var trainNumber = ViewBag.TrainNumber;
+    var travelDate = ViewBag.TravelDate;
+    var trainId = ViewBag.TrainId;
+    var fromStationId = ViewBag.FromStationId;
+    var toStationId = ViewBag.ToStationId;
+}
+
+<div class="container-fluid">
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h3 class="text-primary mb-1">
+                        <i class="bi bi-train-front"></i> Поїзд №@trainNumber
+                    </h3>
+                    <p class="text-muted mb-0">Дата: @travelDate | <span class="badge bg-success">Режим менеджера</span></p>
+                </div>
+                <a asp-action="BookTicket" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Назад до пошуку
+                </a>
+            </div>
+        </div>
+    </div>
+
+    @if (seatsData != null && seatsData.Any())
+    {
+        <div class="row">
+            <!-- Схема поезда -->
+            <div class="col-lg-8">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-diagram-3"></i> Схема поїзда
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div id="trainSchema" class="train-schema">
+                            <!-- Схема будет сгенерирована JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Панель выбора клиента -->
+            <div class="col-lg-4">
+                <div class="card shadow">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-person-check"></i> Вибір клієнта
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="clientSearch" class="form-label">Пошук клієнта:</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="clientSearch" 
+                                       placeholder="Введіть ім'я, прізвище або логін...">
+                                <button class="btn btn-outline-primary" type="button" onclick="searchClients()" id="searchButton">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                            <div class="form-text">Введіть мінімум 2 символи для пошуку</div>
+                        </div>
+
+                        <div id="clientSearchResults" class="mb-3"></div>
+
+                        <div id="selectedClientInfo" style="display: none;" class="alert alert-info">
+                            <h6><i class="bi bi-person-check-fill"></i> Обраний клієнт:</h6>
+                            <div id="clientDetails"></div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="clearClientSelection()">
+                                <i class="bi bi-x-circle"></i> Очистити вибір
+                            </button>
+                        </div>
+
+                        <hr>
+
+                        <div id="selectedSeatInfo" style="display: none;" class="alert alert-warning">
+                            <h6><i class="bi bi-geo-alt-fill"></i> Обране місце:</h6>
+                            <div id="seatDetails"></div>
+                        </div>
+
+                        <div id="bookingSection" style="display: none;">
+                            <button type="button" class="btn btn-success w-100 btn-lg" onclick="confirmBooking()">
+                                <i class="bi bi-check-circle"></i> Забронювати квиток
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Легенда -->
+                <div class="card shadow mt-3">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">
+                            <i class="bi bi-info-circle"></i> Легенда
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="legend-item">
+                            <span class="seat-legend available"></span>
+                            <span>Вільне місце (можна обрати)</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="seat-legend occupied"></span>
+                            <span>Зайняте місце (оплачено)</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="seat-legend reserved"></span>
+                            <span>Заброньоване (не оплачено)</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="seat-legend selected"></span>
+                            <span>Обране вами місце</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Инструкция -->
+                <div class="card shadow mt-3">
+                    <div class="card-header bg-info text-white">
+                        <h6 class="mb-0">
+                            <i class="bi bi-lightbulb"></i> Інструкція
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <ol class="small mb-0">
+                            <li>Знайдіть клієнта за допомогою пошуку</li>
+                            <li>Оберіть клієнта зі списку</li>
+                            <li>Клацніть на вільне місце в схемі поїзда</li>
+                            <li>Натисніть "Забронювати квиток"</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-warning text-center">
+                    <h5>Немає доступних місць</h5>
+                    <p>@ViewBag.NoSeatsMessage</p>
+                    <a asp-action="BookTicket" class="btn btn-primary">
+                        <i class="bi bi-arrow-left"></i> Повернутися до пошуку
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .train-schema {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        max-height: 600px;
+        overflow-y: auto;
+    }
+
+    .carriage {
+        border: 2px solid #007bff;
+        border-radius: 10px;
+        padding: 15px;
+        background-color: #f8f9fa;
+    }
+
+    .carriage-header {
+        text-align: center;
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #007bff;
+    }
+
+    .seats-grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 8px;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+
+    .seat {
+        width: 40px;
+        height: 40px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .seat.available {
+        background-color: #d4edda;
+        border-color: #28a745;
+        color: #155724;
+    }
+
+    .seat.available:hover {
+        background-color: #c3e6cb;
+        transform: scale(1.1);
+        box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+    }
+
+    .seat.occupied {
+        background-color: #f8d7da;
+        border-color: #dc3545;
+        color: #721c24;
+        cursor: not-allowed;
+    }
+
+    .seat.reserved {
+        background-color: #fff3cd;
+        border-color: #ffc107;
+        color: #856404;
+        cursor: not-allowed;
+    }
+
+    .seat.booked {
+        background-color: #e2e3e5;
+        border-color: #6c757d;
+        color: #495057;
+        cursor: not-allowed;
+    }
+
+    .seat.selected {
+        background-color: #cce7ff;
+        border-color: #007bff;
+        color: #004085;
+        transform: scale(1.15);
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.5);
+        animation: pulse 1s infinite;
+    }
+
+
+
+    .seat-legend {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+        margin-right: 8px;
+        border: 1px solid #ddd;
+    }
+
+    .seat-legend.available {
+        background-color: #d4edda;
+        border-color: #28a745;
+    }
+
+    .seat-legend.occupied {
+        background-color: #f8d7da;
+        border-color: #dc3545;
+    }
+
+    .seat-legend.reserved {
+        background-color: #fff3cd;
+        border-color: #ffc107;
+    }
+
+    .seat-legend.booked {
+        background-color: #e2e3e5;
+        border-color: #6c757d;
+    }
+
+    .seat-legend.selected {
+        background-color: #cce7ff;
+        border-color: #007bff;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+    }
+
+    .client-search-result {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border-radius: 8px;
+    }
+
+    .client-search-result:hover {
+        background-color: #e9ecef;
+        transform: translateY(-1px);
+    }
+
+    .card {
+        border: none;
+        border-radius: 15px;
+    }
+
+    .card-header {
+        border-radius: 15px 15px 0 0 !important;
+    }
+
+    .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #007bff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+
+</style>
+
+<script>
+    let selectedSeatId = null;
+    let selectedClientId = null;
+    let selectedClientName = '';
+    let seatPrice = 0;
+
+    // Данные о местах
+    const seatsData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(seatsData ?? new List<Dictionary<string, object>>()));
+    const trainId = @trainId;
+    const fromStationId = @fromStationId;
+    const toStationId = @toStationId;
+    const travelDate = '@travelDate';
+
+    // Генерация схемы поезда
+    function generateTrainSchema() {
+        const trainSchemaEl = document.getElementById('trainSchema');
+        const carriageGroups = {};
+
+        // Группируем места по вагонам
+        seatsData.forEach(seat => {
+            const carriageId = seat.train_carriage_types_id;
+            if (!carriageGroups[carriageId]) {
+                carriageGroups[carriageId] = {
+                    carriage_number: seat.carriage_number,
+                    carriage_type: seat.carriage_type,
+                    seats: []
+                };
+            }
+            carriageGroups[carriageId].seats.push(seat);
+        });
+
+        // Создаем HTML для каждого вагона
+        Object.keys(carriageGroups).forEach(carriageId => {
+            const carriage = carriageGroups[carriageId];
+            const carriageEl = document.createElement('div');
+            carriageEl.className = 'carriage';
+            carriageEl.innerHTML = `
+                <div class="carriage-header">
+                    Вагон ${carriage.carriage_number} (${carriage.carriage_type})
+                </div>
+                <div class="seats-grid" id="carriage-${carriageId}">
+                </div>
+            `;
+
+            const seatsGrid = carriageEl.querySelector('.seats-grid');
+            
+            // Сортируем места по номеру
+            carriage.seats.sort((a, b) => a.seat_number - b.seat_number);
+
+            carriage.seats.forEach(seat => {
+                const seatEl = document.createElement('div');
+                seatEl.className = `seat ${seat.status}`;
+                seatEl.innerHTML = seat.seat_number;
+                seatEl.setAttribute('data-seat-id', seat.seat_id);
+                seatEl.setAttribute('data-price', seat.price || 0);
+
+                if (seat.status === 'available') {
+                    seatEl.addEventListener('click', () => selectSeat(seat));
+                    seatEl.title = `Місце ${seat.seat_number} - вільне (клацніть для вибору)`;
+                } else if (seat.status === 'occupied') {
+                    seatEl.title = `Місце ${seat.seat_number} - зайняте (оплачено)`;
+                } else if (seat.status === 'reserved') {
+                    seatEl.title = `Місце ${seat.seat_number} - заброньоване (не оплачено)`;
+                } else {
+                    seatEl.title = `Місце ${seat.seat_number} - недоступне`;
+                }
+
+                seatsGrid.appendChild(seatEl);
+            });
+
+            trainSchemaEl.appendChild(carriageEl);
+        });
+    }
+
+    // Выбор места
+    function selectSeat(seat) {
+        // Снимаем выделение с предыдущего места
+        const prevSelected = document.querySelector('.seat.selected');
+        if (prevSelected) {
+            prevSelected.classList.remove('selected');
+            prevSelected.classList.add('available');
+        }
+
+        // Выделяем новое место
+        const seatEl = document.querySelector(`[data-seat-id="${seat.seat_id}"]`);
+        seatEl.classList.remove('available');
+        seatEl.classList.add('selected');
+
+        selectedSeatId = seat.seat_id;
+        seatPrice = seat.price || 0;
+
+        // Обновляем информацию о выбранном месте
+        document.getElementById('seatDetails').innerHTML = `
+            <strong>Місце:</strong> ${seat.seat_number}<br>
+            <strong>Вагон:</strong> ${seat.carriage_number} (${seat.carriage_type})
+        `;
+        document.getElementById('selectedSeatInfo').style.display = 'block';
+
+        updateBookingSection();
+    }
+
+    // Поиск клиентов
+    function searchClients() {
+        const query = document.getElementById('clientSearch').value.trim();
+        const resultsDiv = document.getElementById('clientSearchResults');
+        const searchButton = document.getElementById('searchButton');
+        
+        if (query.length < 2) {
+            resultsDiv.innerHTML = '<div class="alert alert-info">Введіть мінімум 2 символи</div>';
+            return;
+        }
+
+        // Показываем индикатор загрузки
+        searchButton.innerHTML = '<span class="loading-spinner"></span>';
+        searchButton.disabled = true;
+
+        fetch(`/Manager/SearchClients?query=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(clients => {
+                searchButton.innerHTML = '<i class="bi bi-search"></i>';
+                searchButton.disabled = false;
+
+                if (clients.error) {
+                    resultsDiv.innerHTML = '<div class="alert alert-danger">Помилка пошуку</div>';
+                    return;
+                }
+
+                if (clients.length === 0) {
+                    resultsDiv.innerHTML = '<div class="alert alert-info">Клієнтів не знайдено</div>';
+                    return;
+                }
+
+                let html = '<div class="list-group">';
+                clients.forEach(client => {
+                    html += `
+                        <div class="list-group-item list-group-item-action client-search-result" 
+                             onclick="selectClient(${client.id}, '${client.name}', '${client.login}', '${client.email || ''}', '${client.phone || ''}')">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">${client.name}</h6>
+                                <small>ID: ${client.id}</small>
+                            </div>
+                            <p class="mb-1">Логін: ${client.login}</p>
+                            <small>${client.email || ''} ${client.phone || ''}</small>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                resultsDiv.innerHTML = html;
+            })
+            .catch(error => {
+                searchButton.innerHTML = '<i class="bi bi-search"></i>';
+                searchButton.disabled = false;
+                resultsDiv.innerHTML = '<div class="alert alert-danger">Помилка при пошуку</div>';
+            });
+    }
+
+    // Поиск при нажатии Enter
+    document.getElementById('clientSearch').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            searchClients();
+        }
+    });
+
+    // Автоматический поиск при вводе (с задержкой)
+    let searchTimeout;
+    document.getElementById('clientSearch').addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const query = this.value.trim();
+        
+        if (query.length >= 2) {
+            searchTimeout = setTimeout(() => {
+                searchClients();
+            }, 500); // Задержка 500мс
+        } else {
+            document.getElementById('clientSearchResults').innerHTML = '';
+        }
+    });
+
+    // Выбор клиента
+    function selectClient(clientId, clientName, clientLogin, clientEmail, clientPhone) {
+        selectedClientId = clientId;
+        selectedClientName = clientName;
+
+        // Очищаем поле поиска и результаты
+        document.getElementById('clientSearch').value = '';
+        document.getElementById('clientSearchResults').innerHTML = '';
+
+        // Показываем информацию о выбранном клиенте
+        document.getElementById('clientDetails').innerHTML = `
+            <strong>${clientName}</strong><br>
+            <small>Логін: ${clientLogin}</small><br>
+            <small>${clientEmail ? 'Email: ' + clientEmail : ''}</small><br>
+            <small>${clientPhone ? 'Телефон: ' + clientPhone : ''}</small>
+        `;
+        document.getElementById('selectedClientInfo').style.display = 'block';
+
+        updateBookingSection();
+    }
+
+    // Очистка выбора клиента
+    function clearClientSelection() {
+        selectedClientId = null;
+        selectedClientName = '';
+        document.getElementById('selectedClientInfo').style.display = 'none';
+        updateBookingSection();
+    }
+
+    // Обновление секции бронирования
+    function updateBookingSection() {
+        const bookingSection = document.getElementById('bookingSection');
+        
+        if (selectedClientId && selectedSeatId) {
+            bookingSection.style.display = 'block';
+        } else {
+            bookingSection.style.display = 'none';
+        }
+    }
+
+    // Подтверждение бронирования
+    function confirmBooking() {
+        if (!selectedClientId || !selectedSeatId) {
+            alert('Будь ласка, оберіть клієнта та місце.');
+            return;
+        }
+
+        const confirmed = confirm(`Забронювати місце ${document.querySelector('.seat.selected').textContent} для клієнта ${selectedClientName}?`);
+        if (!confirmed) return;
+
+        const formData = new FormData();
+        formData.append('clientId', selectedClientId);
+        formData.append('seatId', selectedSeatId);
+        formData.append('trainId', trainId);
+        formData.append('travelDate', travelDate);
+        formData.append('fromStationId', fromStationId);
+        formData.append('toStationId', toStationId);
+
+        fetch('/Manager/BookSeatForClient', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                showSuccessModal(result);
+                setTimeout(() => {
+                    location.reload();
+                }, 3000);
+            } else {
+                showErrorModal(result.message);
+            }
+        })
+        .catch(error => {
+            showErrorModal('Помилка при бронюванні квитка');
+        });
+    }
+
+    // Модальные окна успеха и ошибки
+    function showSuccessModal(result) {
+        const modal = document.createElement('div');
+        modal.innerHTML = `
+            <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; justify-content: center; align-items: center;">
+                <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 500px; text-align: center;">
+                    <div style="color: #28a745; font-size: 48px; margin-bottom: 20px;">✅</div>
+                    <h3 style="color: #28a745; margin-bottom: 20px;">Квиток успішно забронований!</h3>
+                    
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0; text-align: left;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span style="font-weight: 600;">Номер квитка:</span>
+                            <span style="color: #007bff; font-weight: 700;">#${result.ticket_id}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span style="font-weight: 600;">Клієнт:</span>
+                            <span style="font-weight: 700;">${selectedClientName}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span style="font-weight: 600;">Вартість:</span>
+                            <span style="color: #28a745; font-weight: 700; font-size: 18px;">${result.total_price} грн</span>
+                        </div>
+                    </div>
+
+                    <button onclick="this.parentElement.parentElement.remove()" 
+                            style="background: #007bff; color: white; border: none; padding: 12px 30px; border-radius: 8px; font-size: 16px; cursor: pointer;">
+                        Зрозуміло
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    function showErrorModal(message) {
+        const modal = document.createElement('div');
+        modal.innerHTML = `
+            <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; justify-content: center; align-items: center;">
+                <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 400px; text-align: center;">
+                    <div style="color: #dc3545; font-size: 48px; margin-bottom: 20px;">❌</div>
+                    <h3 style="color: #dc3545; margin-bottom: 20px;">Помилка бронювання</h3>
+                    <p style="color: #6c757d; margin-bottom: 30px;">${message}</p>
+                    <button onclick="this.parentElement.parentElement.remove()" 
+                            style="background: #dc3545; color: white; border: none; padding: 12px 30px; border-radius: 8px; font-size: 16px; cursor: pointer;">
+                        Закрити
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    // Инициализация при загрузке страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        generateTrainSchema();
+    });
+</script>

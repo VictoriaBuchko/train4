@@ -1,0 +1,190 @@
+﻿@{
+    ViewData["Title"] = "Деталі розкладу";
+    var schedule = Model as Dictionary<string, object>;
+}
+<link rel="stylesheet" href="~/css/schedule-styles.css" />
+<div class="container mt-4">
+    <h1>Деталі розкладу №@schedule["schedule_id"]</h1>
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="Index">Список розкладів</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Деталі розкладу</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Основна інформація -->
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Основна інформація</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>ID розкладу:</strong> @schedule["schedule_id"]</p>
+                            <p><strong>Потяг:</strong> №@schedule["train_number"]</p>
+                            <p><strong>Дата:</strong> @(((DateTime)schedule["date"]).ToString("dd.MM.yyyy"))</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Час відправлення:</strong> @(((TimeSpan)schedule["departure_time"]).ToString("hh\\:mm"))</p>
+                            <p><strong>Дні тижня:</strong>
+                                <span class="badge bg-info">@schedule["weekdays"]</span>
+                            </p>
+                            <p><strong>Статус потяга:</strong>
+                                <span class="badge @(((bool)schedule["train_is_active"]) ? "bg-success" : "bg-secondary")">
+                                    @(((bool)schedule["train_is_active"]) ? "Активний" : "Неактивний")
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Маршрут -->
+            @if (schedule.ContainsKey("route") && schedule["route"] is List<Dictionary<string, object>> route && route.Any())
+            {
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Маршрут потяга</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>№</th>
+                                        <th>Станція</th>
+                                        <th>Час в дорозі</th>
+                                        <th>Відстань (км)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (int i = 0; i < route.Count; i++)
+                                    {
+                                        var station = route[i];
+                                        <tr>
+                                            <td>@(i + 1)</td>
+                                            <td>
+                                                <strong>@station["station_name"]</strong>
+                                                @if (i == 0)
+                                                {
+                                                    <span class="badge bg-success ms-2">Початок</span>
+                                                }
+                                                else if (i == route.Count - 1)
+                                                {
+                                                    <span class="badge bg-danger ms-2">Кінець</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (i == 0)
+                                                {
+                                                    <span class="text-muted">—</span>
+                                                }
+                                                else
+                                                {
+                                                    @(((TimeSpan)station["travel_duration"]).ToString("hh\\:mm"))
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (i == 0)
+                                                {
+                                                    <span class="text-muted">0</span>
+                                                }
+                                                else
+                                                {
+                                                    @station["distance_km"]
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i> Маршрут для цього потяга не налаштовано.
+                </div>
+            }
+        </div>
+
+        <!-- Статистика -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Статистика</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center">
+                        <div class="mb-3">
+                            <h3 class="text-primary">@schedule["tickets_count"]</h3>
+                            <small class="text-muted">Квитків продано</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <h3 class="text-success">@(((decimal)schedule["total_revenue"]).ToString("F2")) грн</h3>
+                            <small class="text-muted">Загальний дохід</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <h3 class="text-info">@schedule["carriage_count"]</h3>
+                            <small class="text-muted">Вагонів у потязі</small>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="d-grid gap-2">
+                        @if ((int)schedule["tickets_count"] == 0 && (DateTime)schedule["date"] >= DateTime.Today)
+                        {
+                            <a asp-action="EditSchedule" asp-route-id="@schedule["schedule_id"]"
+                               class="btn btn-warning">
+                                <i class="bi bi-pencil"></i> Редагувати розклад
+                            </a>
+                        }
+                        else
+                        {
+                            <button type="button" class="btn btn-secondary" disabled title="Неможливо редагувати - є продані квитки або дата в минулому">
+                                <i class="bi bi-lock"></i> Редагування заборонено
+                            </button>
+                        }
+
+                        <a asp-controller="Admin" asp-action="TrainDetails" asp-route-id="@schedule["train_id"]"
+                           class="btn btn-outline-primary">
+                            <i class="bi bi-train-front"></i> Деталі потяга
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Важливі нотатки -->
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0">Важливі нотатки</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="small mb-0">
+                        <li>Розклад можна редагувати тільки якщо немає проданих квитків</li>
+                        <li>Неможливо редагувати розклади для минулих дат</li>
+                        <li>Дні тижня зберігаються у форматі: Пн,Вт,Ср,Чт,Пт,Сб,Нд</li>
+                        @if ((int)schedule["tickets_count"] > 0)
+                        {
+                            <li class="text-danger"><strong>Для цього розкладу вже продано @schedule["tickets_count"] квитків</strong></li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-5">
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Повернутися до списку розкладів
+        </a>
+    </div>
+</div>

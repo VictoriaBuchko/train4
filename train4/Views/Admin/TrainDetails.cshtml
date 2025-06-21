@@ -1,0 +1,77 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+@model train2.Models.Train
+@{
+    ViewData["Title"] = "Деталі потяга";
+}
+
+<div class="container mt-4">
+    <h1>Деталі потяга №@Model.train_number</h1>
+    
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="Index">Список потягів</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Деталі потяга</li>
+        </ol>
+    </nav>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Основна інформація</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <p><strong>ID потяга:</strong> @Model.train_id</p>
+                </div>
+                <div class="col-md-4">
+                    <p><strong>Номер потяга:</strong> @Model.train_number</p>
+                </div>
+                <div class="col-md-4">
+                    <p><strong>Кількість вагонів:</strong> @Model.carriage_count</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Вагони та місця</h5>
+        </div>
+        <div class="card-body">
+            @if (Model.TrainCarriageTypes == null || !Model.TrainCarriageTypes.Any())
+            {
+                <div class="alert alert-info">
+                    Інформація про вагони відсутня.
+                </div>
+            }
+            else
+            {
+                <div class="row">
+                    @foreach (var carriage in Model.TrainCarriageTypes.OrderBy(c => c.carriage_number))
+                    {
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Вагон #@carriage.carriage_number (@carriage.CarriageTypes.carriage_type)</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>ID вагона:</strong> @carriage.train_carriage_types_id</p>
+                                    <p><strong>Тип вагона:</strong> @carriage.CarriageTypes.carriage_type</p>
+                                    <p><strong>Кількість місць:</strong> @carriage.CarriageTypes.seat_count</p>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+    
+    <div class="mb-5">
+        <a asp-action="Index" class="btn btn-secondary">Повернутися до списку</a>
+    </div>
+</div>

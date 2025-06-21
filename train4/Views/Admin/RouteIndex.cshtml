@@ -1,0 +1,140 @@
+﻿@model List<train2.Models.Train>
+
+@{
+    ViewData["Title"] = "Маршрути потягів";
+}
+
+<style>
+    /* Базовые стили */
+    .text-primary {
+        color: #1a3dc1 !important;
+    }
+
+    /* Стили для таблицы */
+    .table {
+        background: white;
+        border-radius: 5px;
+        overflow: hidden;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        font-family: 'Segoe UI', sans-serif;
+        border: none;
+    }
+
+        .table th {
+            background-color: #1a3dc1;
+            color: white;
+            padding: 12px;
+            border: none;
+            font-weight: 600;
+        }
+
+        .table td {
+            padding: 10px 12px;
+            border: none;
+            vertical-align: middle;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+    .table-striped > tbody > tr:nth-of-type(odd) > td {
+        background-color: #f8f9fa;
+    }
+
+    /* Кнопки */
+    .btn {
+        padding: 8px 16px;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .btn-outline-success {
+        background-color: #1a3dc1;
+        border-color: #1a3dc1;
+        color: white;
+    }
+
+        .btn-outline-success:hover {
+            background-color: #0f2fa1;
+            border-color: #0f2fa1;
+        }
+
+    .btn-outline-primary, .btn-sm.btn-outline-primary {
+        background-color: #17a2b8;
+        border-color: #17a2b8;
+        color: white;
+        padding: 6px 14px;
+    }
+
+        .btn-outline-primary:hover {
+            background-color: #138496;
+            border-color: #138496;
+        }
+
+    .btn-outline-warning, .btn-sm.btn-outline-warning {
+        background-color: #ffc107;
+        border-color: #ffc107;
+        color: #333;
+        padding: 6px 14px;
+    }
+
+        .btn-outline-warning:hover {
+            background-color: #e0a800;
+            border-color: #e0a800;
+        }
+
+    .btn-group .btn {
+        margin-right: 2px;
+    }
+</style>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="text-primary">
+            <i class="bi bi-signpost"></i> Маршрути потягів
+        </h2>
+        <a asp-controller="Admin" asp-action="AdminMenu" class="btn btn-outline-dark">
+            <i class="bi bi-arrow-left-circle"></i> Назад до меню адміністратора
+        </a>
+    </div>
+
+    <!-- 🔼 Кнопка додати нову послідовність -->
+    <div class="mb-3">
+        <a asp-controller="Admin" asp-action="CreateRoute" class="btn btn-outline-success">
+            <i class="bi bi-plus-circle"></i> Додати нову послідовність
+        </a>
+    </div>
+
+    <table class="table table-striped align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>ID потяга</th>
+                <th>Номер потяга</th>
+                <th>Кількість вагонів</th>
+                <th>Дії</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var train in Model)
+            {
+                <tr>
+                    <td>@train.train_id</td>
+                    <td>@train.train_number</td>
+                    <td>@train.carriage_count</td>
+                    <td>
+                        <!-- 🔘 Кнопка деталі -->
+                        <a asp-controller="Admin" asp-action="RouteDetails" asp-route-trainId="@train.train_id" class="btn btn-sm btn-outline-primary me-2">
+                            <i class="bi bi-list-ul"></i> Деталі
+                        </a>
+
+                        <!-- ✏️ Кнопка редагувати -->
+                        <a asp-controller="Admin" asp-action="EditRoute" asp-route-trainId="@train.train_id" class="btn btn-sm btn-outline-warning">
+                            <i class="bi bi-pencil-square"></i> Редагувати
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

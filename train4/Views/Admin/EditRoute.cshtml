@@ -1,0 +1,202 @@
+﻿@model List<train2.Models.StationSequence>
+
+@{
+    ViewData["Title"] = "Редагування маршруту";
+    var trainId = ViewBag.TrainId;
+    var trainNumber = ViewBag.TrainNumber;
+    var canFullyEdit = ViewBag.CanFullyEdit;
+}
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary">
+            <i class="bi bi-pencil-square"></i> Редагування маршруту поїзда №@trainNumber
+        </h2>
+        <a asp-action="RouteIndex" class="btn btn-outline-dark">
+            <i class="bi bi-arrow-left-circle"></i> Назад до списку
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (!canFullyEdit)
+    {
+        <div class="alert alert-warning" role="alert">
+            <i class="bi bi-exclamation-triangle"></i>
+            <strong>Увага!</strong> Деякі станції маршруту мають активні бронювання. Можна редагувати тільки тривалість та відстань.
+        </div>
+    }
+
+    <div class="card shadow">
+        <div class="card-body">
+            <form asp-action="EditRoute" method="post">
+                <input type="hidden" name="trainId" value="@trainId" />
+
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered">
+                        <thead class="table-light">
+                            <tr class="text-center">
+                                <th>#</th>
+                                <th>Станція</th>
+                                <th>Тривалість (ГГ:ХХ:СС)</th>
+                                <th>Відстань (км)</th>
+                                <th>Розрахункова ціна (₴)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < Model.Count; i++)
+                            {
+                                var station = Model[i];
+                                var calculatedPrice = (station.distance_km * 0.5) + (station.travel_duration.TotalMinutes * 0.3);
+
+                                <tr>
+                                    <td class="text-center align-middle">
+                                        @(i + 1)
+                                        <!-- Приховані поля для передачі всіх необхідних даних -->
+                                        <input type="hidden" name="updatedRoute[@i].sequence_id" value="@station.sequence_id" />
+                                        <input type="hidden" name="updatedRoute[@i].train_id" value="@station.train_id" />
+                                        <input type="hidden" name="updatedRoute[@i].station_id" value="@station.station_id" />
+                                        <input type="hidden" name="updatedRoute[@i].next_station_sequence_id" value="@station.next_station_sequence_id" />
+                                        <input type="hidden" name="updatedRoute[@i].previous_station_sequence_id" value="@station.previous_station_sequence_id" />
+
+                                        <!-- Передача Train object -->
+                                        <input type="hidden" name="updatedRoute[@i].Train.train_id" value="@station.train_id" />
+                                        <input type="hidden" name="updatedRoute[@i].Train.train_number" value="@trainNumber" />
+                                        <input type="hidden" name="updatedRoute[@i].Train.is_active" value="true" />
+
+                                        <!-- Передача Stations object -->
+                                        <input type="hidden" name="updatedRoute[@i].Stations.station_id" value="@station.station_id" />
+                                        <input type="hidden" name="updatedRoute[@i].Stations.station_name" value="@station.Stations.station_name" />
+                                    </td>
+                                    <td class="align-middle">
+                                        <strong>@station.Stations.station_name</strong>
+                                    </td>
+                                    <td class="text-center">
+                                        <input type="time"
+                                               step="1"
+                                               name="updatedRoute[@i].travel_duration"
+                                               value="@station.travel_duration.ToString(@"hh\:mm\:ss")"
+                                               class="form-control text-center duration-input"
+                                               style="width: 120px; margin: 0 auto;"
+                                               data-row="@i"
+                                               required />
+                                    </td>
+                                    <td class="text-center">
+                                        <input type="number"
+                                               name="updatedRoute[@i].distance_km"
+                                               value="@station.distance_km"
+                                               class="form-control text-center distance-input"
+                                               style="width: 100px; margin: 0 auto;"
+                                               data-row="@i"
+                                               min="1"
+                                               required />
+                                    </td>
+                                    <td class="text-center align-middle">
+                                        <span class="badge bg-info price-display" id="price_@i">@calculatedPrice.ToString("0.00")</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12 text-center">
+                        <button type="submit" class="btn btn-success me-3">
+                            <i class="bi bi-check-circle"></i> Зберегти зміни
+                        </button>
+                        <a asp-action="RouteDetails" asp-route-trainId="@trainId" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Скасувати
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const durationInputs = document.querySelectorAll('.duration-input');
+        const distanceInputs = document.querySelectorAll('.distance-input');
+
+        // Автоматичний перерахунок ціни при зміні тривалості або відстані
+        durationInputs.forEach(input => {
+            input.addEventListener('input', function () {
+                const row = this.getAttribute('data-row');
+                updatePrice(row);
+            });
+        });
+
+        distanceInputs.forEach(input => {
+            input.addEventListener('input', function () {
+                const row = this.getAttribute('data-row');
+                updatePrice(row);
+            });
+        });
+
+        function updatePrice(rowIndex) {
+            const durationInput = document.querySelector(`input[data-row="${rowIndex}"].duration-input`);
+            const distanceInput = document.querySelector(`input[data-row="${rowIndex}"].distance-input`);
+            const priceDisplay = document.querySelector(`#price_${rowIndex}`);
+
+            if (durationInput && distanceInput && priceDisplay) {
+                const timeValue = durationInput.value;
+                const distance = parseFloat(distanceInput.value) || 0;
+
+                if (timeValue) {
+                    const timeParts = timeValue.split(':');
+                    const totalMinutes = (parseInt(timeParts[0]) * 60) + parseInt(timeParts[1]) + (parseInt(timeParts[2]) / 60);
+                    const calculatedPrice = (distance * 0.5) + (totalMinutes * 0.3);
+                    priceDisplay.textContent = calculatedPrice.toFixed(2);
+                }
+            }
+        }
+    });
+</script>
+
+<style>
+    .table th {
+        background-color: #1a3dc1;
+        color: white;
+        border: none;
+    }
+
+    .table td {
+        vertical-align: middle;
+    }
+
+    .form-control:focus {
+        border-color: #1a3dc1;
+        box-shadow: 0 0 0 0.2rem rgba(26, 61, 193, 0.25);
+    }
+
+    .btn-success {
+        background-color: #1a3dc1;
+        border-color: #1a3dc1;
+    }
+
+        .btn-success:hover {
+            background-color: #0f2fa1;
+            border-color: #0f2fa1;
+        }
+
+    .price-display {
+        font-size: 1rem;
+        padding: 8px 12px;
+    }
+</style>

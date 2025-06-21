@@ -1,0 +1,251 @@
+﻿@{
+    ViewData["Title"] = "Фінансові звіти";
+}
+
+<div class="container-fluid">
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h3 class="text-info mb-1">
+                        <i class="bi bi-graph-up"></i> Фінансові звіти та статистика
+                    </h3>
+                    <p class="text-muted mb-0">Аналіз продажів квитків та фінансових показників</p>
+                </div>
+                <a asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Назад до панелі
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Фильтры периода -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-calendar-range"></i> Налаштування періоду
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label for="startDate" class="form-label">Дата початку:</label>
+                            <input type="date" class="form-control" id="startDate">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="endDate" class="form-label">Дата кінця:</label>
+                            <input type="date" class="form-control" id="endDate">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="reportType" class="form-label">Тип звіту:</label>
+                            <select class="form-select" id="reportType">
+                                <option value="summary">Загальний</option>
+                                <option value="detailed">Детальний</option>
+                                @* <option value="trains">По поїздам</option> *@
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-primary" onclick="generateReport()">
+                                    <i class="bi bi-file-earmark-bar-graph"></i> Згенерувати звіт
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-info btn-sm" onclick="setQuickPeriod('today')">Сьогодні</button>
+                                <button type="button" class="btn btn-outline-info btn-sm" onclick="setQuickPeriod('week')">Цей тиждень</button>
+                                <button type="button" class="btn btn-outline-info btn-sm" onclick="setQuickPeriod('month')">Цей місяць</button>
+                                <button type="button" class="btn btn-outline-info btn-sm" onclick="setQuickPeriod('quarter')">Цей квартал</button>
+                                <button type="button" class="btn btn-outline-info btn-sm" onclick="setQuickPeriod('year')">Цей рік</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Основная статистика -->
+    <div class="row mb-4" id="summaryStats" style="display: none;">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0 text-muted">
+                        <i class="bi bi-bar-chart"></i> Загальна статистика за період
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center p-3 bg-light rounded">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+                                        <i class="bi bi-ticket text-primary fs-4"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h4 class="mb-0 text-primary" id="totalTicketsBooked">-</h4>
+                                    <small class="text-muted">Заброньовано квитків</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center p-3 bg-light rounded">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                                        <i class="bi bi-check-circle text-success fs-4"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h4 class="mb-0 text-success" id="totalTicketsPaid">-</h4>
+                                    <small class="text-muted">Оплачено квитків</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center p-3 bg-light rounded">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-warning bg-opacity-10 rounded-circle p-3">
+                                        <i class="bi bi-clock text-warning fs-4"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h4 class="mb-0 text-warning" id="unpaidTickets">-</h4>
+                                    <small class="text-muted">Неоплачені квитки</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center p-3 bg-light rounded">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-info bg-opacity-10 rounded-circle p-3">
+                                        <i class="bi bi-currency-exchange text-info fs-4"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h4 class="mb-0 text-info" id="totalAmountBooked">-</h4>
+                                    <small class="text-muted">Сума бронювань (грн)</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center p-3 bg-light rounded">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                                        <i class="bi bi-cash-coin text-success fs-4"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h4 class="mb-0 text-success" id="totalAmountPaid">-</h4>
+                                    <small class="text-muted">Сума оплат (грн)</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center p-3 bg-light rounded">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-danger bg-opacity-10 rounded-circle p-3">
+                                        <i class="bi bi-exclamation-circle text-danger fs-4"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h4 class="mb-0 text-danger" id="unpaidAmount">-</h4>
+                                    <small class="text-muted">Неоплачена сума (грн)</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Таблица статистики по поездам -->
+    <div class="row mb-4" id="trainsSection" style="display: none;">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-train-front"></i> Статистика по поїздам
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>№ Поїзда</th>
+                                    <th>Квитків заброньовано</th>
+                                    <th>Сума бронювань (грн)</th>
+                                    <th>Квитків оплачено</th>
+                                    <th>Сума оплат (грн)</th>
+                                    <th>Відсоток оплат</th>
+                                    <th>Ефективність</th>
+                                </tr>
+                            </thead>
+                            <tbody id="trainsTableBody">
+                                <!-- Данные будут загружены через JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ежедневная детальная статистика -->
+    <div class="row mb-4" id="dailySection" style="display: none;">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-calendar3"></i> Денна статистика
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Дата</th>
+                                    <th>Квитків заброньовано</th>
+                                    <th>Сума бронювань (грн)</th>
+                                    <th>Квитків оплачено</th>
+                                    <th>Сума оплат (грн)</th>
+                                    <th>Відсоток оплат</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dailyTableBody">
+                                <!-- Данные будут загружены через JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Скрытая секция экспорта (для совместимости с JS) -->
+    <div class="row" id="exportSection" style="display: none;">
+        <!-- Пустая секция для предотвращения ошибок JS -->
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pages/accountant/FinancialReports.js"></script>
+}

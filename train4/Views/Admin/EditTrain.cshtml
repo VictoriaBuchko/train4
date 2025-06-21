@@ -1,0 +1,639 @@
+﻿@model train2.Models.Train
+@{
+    ViewData["Title"] = "Редагування потяга";
+    var carriageTypes = ViewBag.CarriageTypes as List<train2.Models.CarriageTypes>;
+    var existingCarriages = ViewBag.ExistingCarriages as List<Dictionary<string, object>>;
+    var carriagesWithBookings = ViewBag.CarriagesWithBookings as List<Dictionary<string, object>>;
+}
+
+<div class="container mt-4">
+    <h1>Редагування потяга №@Model.train_number</h1>
+    
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="Index">Список потягів</a></li>
+            <li class="breadcrumb-item"><a asp-action="TrainDetails" asp-route-id="@Model.train_id">Деталі потяга</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Редагування</li>
+        </ol>
+    </nav>
+    
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger">
+            <ul>
+                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    <li>@error.ErrorMessage</li>
+                }
+            </ul>
+        </div>
+    }
+    
+    @if (carriagesWithBookings != null && carriagesWithBookings.Any())
+    {
+        <div class="alert alert-warning">
+            <h6><i class="bi bi-exclamation-triangle"></i> Увага! Наступні вагони мають активні бронювання:</h6>
+            <ul class="mb-0">
+                @foreach (var carriage in carriagesWithBookings)
+                {
+                    <li>Вагон №@carriage["carriage_number"] (@carriage["booking_count"] бронювань)</li>
+                }
+            </ul>
+            <small>Ці вагони не можна видаляти або змінювати їх тип. Інші вагони можна редагувати вільно.</small>
+        </div>
+    }
+    
+    <form method="post" id="editTrainForm">
+        <input type="hidden" name="id" value="@Model.train_id" />
+        
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">Основна інформація</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="trainNumber" class="form-label">Номер потяга</label>
+                        <input type="number" class="form-control" id="trainNumber" name="trainNumber" 
+                               value="@Model.train_number" required min="1">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="carriageCount" class="form-label">Кількість вагонів</label>
+                        <input type="number" class="form-control" id="carriageCount" name="carriageCount" 
+                               value="@Model.carriage_count" required min="1" readonly>
+                        <small class="form-text text-muted">Кількість вагонів буде автоматично підрахована</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Вагони потяга</h5>
+                <button type="button" class="btn btn-light btn-sm" id="addCarriage">
+                    <i class="bi bi-plus-lg"></i> Додати вагон
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="carriagesContainer">
+                    <!-- Існуючі вагони будуть завантажені тут -->
+                </div>
+                <div id="noCarriages" class="text-center py-3" style="display: none;">
+                    <p class="text-muted">Додайте вагони до потяга, використовуючи кнопку вище</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="d-flex justify-content-between mb-5">
+            <a asp-action="TrainDetails" asp-route-id="@Model.train_id" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Повернутися до деталей
+            </a>
+            <div>
+                <a asp-action="Index" class="btn btn-outline-secondary me-2">Скасувати</a>
+                <button type="submit" class="btn btn-success" id="submitBtn">
+                    <i class="bi bi-check-lg"></i> Зберегти зміни
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+    const ctypes = @Html.Raw(Json.Serialize(carriageTypes));
+    const ecarriages = @Html.Raw(Json.Serialize(existingCarriages));
+    const bookings = @Html.Raw(Json.Serialize(carriagesWithBookings ?? new List<Dictionary<string, object>>()));
+    const carriagesContainer = document.getElementById('carriagesContainer');
+    const noCarriages = document.getElementById('noCarriages');
+    const addCarriageBtn = document.getElementById('addCarriage');
+    const carriageCountInput = document.getElementById('carriageCount');
+    const submitBtn = document.getElementById('submitBtn');
+
+    let carriageCounter = 0;
+    let maxCarriageNumber = 0;
+
+    console.log('Существующие вагоны:', ecarriages);
+    console.log('Вагоны с бронированиями:', bookings);
+
+    // Функция для проверки конкретного вагона
+    function carriageHasBookings(carriageId) {
+        if (!bookings || !carriageId) return false;
+        const hasBookings = bookings.some(c => parseInt(c.train_carriage_types_id) === parseInt(carriageId));
+        console.log(`Проверка бронирований для вагона ID=${carriageId}: ${hasBookings}`);
+        return hasBookings;
+    }
+
+    // ИСПРАВЛЕННАЯ функция для создания HTML вагона
+    function createCarriageHtml(carriage, isExisting = false) {
+        const carriageNumber = isExisting ? carriage.carriage_number : maxCarriageNumber + 1;
+        const selectedTypeId = isExisting ? carriage.carriage_type_id : '';
+        const carriageId = isExisting ? carriage.train_carriage_types_id : 0;
+
+        const hasBookings = isExisting && carriageHasBookings(carriageId);
+
+        const hasBookingsClass = hasBookings ? 'border-danger' : '';
+        const hasBookingsText = hasBookings ?
+            '<span class="badge bg-danger ms-2">Є бронювання</span>' : '';
+
+        console.log(`Создание вагона ${carriageNumber}: ID=${carriageId}, hasBookings=${hasBookings}, isExisting=${isExisting}`);
+
+        return `
+            <div class="carriage-item card mb-3 ${hasBookingsClass}" data-index="${carriageCounter}"
+                 data-existing="${isExisting}" data-carriage-id="${carriageId}" data-has-bookings="${hasBookings}">
+                <div class="card-header ${hasBookings ? 'bg-danger-subtle' : 'bg-light'} d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        Вагон #${carriageNumber}
+                        ${hasBookingsText}
+                    </h6>
+                    <button type="button" class="btn btn-outline-danger btn-sm remove-carriage"
+                            ${hasBookings ? 'disabled title="Неможливо видалити - є активні бронювання"' : ''}>
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Тип вагона</label>
+                            <select name="carriageTypeIds" class="form-select carriage-type-select" required
+                                    ${hasBookings ? 'disabled title="Неможливо змінити тип - є активні бронювання"' : ''}>
+                                <option value="" disabled ${!isExisting ? 'selected' : ''}>Оберіть тип вагона</option>
+                                ${ctypes.map(ct =>
+            `<option value="${ct.carriage_type_id}" ${selectedTypeId == ct.carriage_type_id ? 'selected' : ''}>
+                                        ${ct.carriage_type} (${ct.seat_count} місць)
+                                    </option>`
+        ).join('')}
+                            </select>
+                            ${hasBookings ? `<input type="hidden" name="carriageTypeIds" value="${selectedTypeId}">` : ''}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Номер вагона в составі</label>
+                            <input type="number" name="carriageNumbers" class="form-control carriage-number-input"
+                                   value="${carriageNumber}" min="1" required
+                                   ${hasBookings ? 'readonly title="Неможливо змінити номер - є активні бронювання"' : ''}>
+                            ${hasBookings ? `<input type="hidden" name="carriageNumbers" value="${carriageNumber}">` : ''}
+                            <!-- Приховане поле для ID існуючого вагона -->
+                            <input type="hidden" name="existingCarriageIds" value="${carriageId}">
+                        </div>
+                    </div>
+                    ${hasBookings ?
+                '<div class="alert alert-warning alert-sm mb-0"><small><i class="bi bi-exclamation-triangle"></i> Цей вагон має активні бронювання і не може бути змінений або видалений</small></div>' :
+                '<div class="alert alert-info alert-sm mb-0"><small><i class="bi bi-info-circle"></i> Цей вагон можна вільно редагувати</small></div>'}
+                </div>
+            </div>
+        `;
+    }
+
+    // Функция для добавления нового вагона
+    function addCarriage(existingCarriage = null) {
+        carriageCounter++;
+
+        if (!existingCarriage) {
+            maxCarriageNumber = Math.max(maxCarriageNumber + 1, carriageCounter);
+        }
+
+        const carriageDiv = document.createElement('div');
+        carriageDiv.innerHTML = createCarriageHtml(existingCarriage, !!existingCarriage);
+        const carriageElement = carriageDiv.firstElementChild;
+        carriagesContainer.appendChild(carriageElement);
+
+        // Добавляем обработчик для удаления вагона
+        const removeBtn = carriageElement.querySelector('.remove-carriage');
+        if (removeBtn && !removeBtn.disabled) {
+            removeBtn.addEventListener('click', function () {
+                const carriageNum = carriageElement.querySelector('h6').textContent.match(/\d+/)[0];
+                if (confirm(`Ви впевнені, що хочете видалити вагон #${carriageNum}?`)) {
+                    carriageElement.remove();
+                    updateCarriageCount();
+                    updateCarriageNumbers();
+                }
+            });
+        }
+
+        updateCarriageCount();
+        updateVisibility();
+    }
+
+    // Загружаем существующие вагоны
+    if (ecarriages && ecarriages.length > 0) {
+        console.log('Завантаження існуючих вагонів:', ecarriages);
+
+        ecarriages.forEach(carriage => {
+            maxCarriageNumber = Math.max(maxCarriageNumber, carriage.carriage_number);
+            addCarriage(carriage);
+        });
+    }
+
+    // Функция для обновления счетчика вагонов
+    function updateCarriageCount() {
+        const carriageItems = document.querySelectorAll('.carriage-item');
+        carriageCountInput.value = carriageItems.length;
+        submitBtn.disabled = carriageItems.length === 0;
+
+        console.log(`Обновлен счетчик вагонов: ${carriageItems.length}`);
+    }
+
+    // Функция для перенумерации вагонов после удаления
+    function updateCarriageNumbers() {
+        const carriageItems = document.querySelectorAll('.carriage-item');
+        carriageItems.forEach((item, index) => {
+            const header = item.querySelector('h6');
+            const isExisting = item.dataset.existing === 'true';
+            const hasBookings = item.dataset.hasBookings === 'true';
+            const bookingsBadge = hasBookings ? '<span class="badge bg-danger ms-2">Є бронювання</span>' : '';
+
+            if (!isExisting && !hasBookings) {
+                const currentNumber = index + 1;
+                header.innerHTML = `Вагон #${currentNumber}${bookingsBadge}`;
+                const numberInput = item.querySelector('.carriage-number-input');
+                if (!numberInput.readOnly) {
+                    numberInput.value = currentNumber;
+                }
+            }
+        });
+    }
+
+    // Функция для обновления видимости элементов
+    function updateVisibility() {
+        const carriageItems = document.querySelectorAll('.carriage-item');
+        if (carriageItems.length === 0) {
+            noCarriages.style.display = 'block';
+        } else {
+            noCarriages.style.display = 'none';
+        }
+    }
+
+    // Добавляем обработчик для кнопки добавления вагона
+    addCarriageBtn.addEventListener('click', () => addCarriage());
+
+    // УПРОЩЕННАЯ проверка формы перед отправкой
+    document.getElementById('editTrainForm').addEventListener('submit', function (e) {
+        console.log('Проверка формы перед отправкой...');
+
+        const carriageItems = document.querySelectorAll('.carriage-item');
+        console.log(`Общее количество вагонов: ${carriageItems.length}`);
+
+        if (carriageItems.length === 0) {
+            e.preventDefault();
+            alert('Потяг має мати хоча б один вагон!');
+            return;
+        }
+
+        // Проверяем только редактируемые вагоны
+        let hasError = false;
+        let protectedCount = 0;
+        let editableCount = 0;
+
+        carriageItems.forEach((item, index) => {
+            const carriageTypeSelect = item.querySelector('.carriage-type-select');
+            const carriageNumberInput = item.querySelector('.carriage-number-input');
+            const hasBookings = item.dataset.hasBookings === 'true';
+
+            if (hasBookings) {
+                protectedCount++;
+                console.log(`Вагон ${index + 1}: защищенный, type=${carriageTypeSelect.value}, number=${carriageNumberInput.value}`);
+            } else {
+                editableCount++;
+                // Проверяем только редактируемые вагоны
+                if (!carriageTypeSelect.value) {
+                    alert(`Вагон ${index + 1}: оберіть тип вагона!`);
+                    hasError = true;
+                    return;
+                }
+                console.log(`Вагон ${index + 1}: редактируемый, type=${carriageTypeSelect.value}, number=${carriageNumberInput.value}`);
+            }
+        });
+
+        if (hasError) {
+            e.preventDefault();
+            return;
+        }
+
+        // Проверка уникальности номеров
+        const carriageNumbers = [];
+        carriageItems.forEach(item => {
+            const numberInput = item.querySelector('.carriage-number-input');
+            carriageNumbers.push(parseInt(numberInput.value));
+        });
+
+        const uniqueNumbers = [...new Set(carriageNumbers)];
+        if (carriageNumbers.length !== uniqueNumbers.length) {
+            e.preventDefault();
+            alert('Номери вагонів повинні бути унікальними!');
+            return;
+        }
+
+        console.log(`Защищенных вагонов: ${protectedCount}, Редактируемых: ${editableCount}`);
+
+        // Подтверждение сохранения
+        if (protectedCount > 0) {
+            const confirmMsg = `Буде збережено зміни для ${editableCount} вагонів. ${protectedCount} вагонів з бронюваннями залишаться без змін. Продовжити?`;
+            if (!confirm(confirmMsg)) {
+                e.preventDefault();
+                return;
+            }
+        }
+
+        console.log('Форма прошла все проверки, отправляем стандартным способом...');
+    });
+
+    // Инициализация
+    updateCarriageCount();
+    updateVisibility();
+
+    console.log('Инициализация завершена');
+});
+    </script>
+}
+
+
+@* @model train2.Models.Train
+@{
+    ViewData["Title"] = "Редагування потяга";
+    var carriageTypes = ViewBag.CarriageTypes as List<train2.Models.CarriageTypes>;
+    var existingCarriages = ViewBag.ExistingCarriages as List<Dictionary<string, object>>;
+    var carriagesWithBookings = ViewBag.CarriagesWithBookings as List<Dictionary<string, object>>;
+}
+
+<div class="container mt-4">
+    <h1>Редагування потяга №@Model.train_number</h1>
+    
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="Index">Список потягів</a></li>
+            <li class="breadcrumb-item"><a asp-action="TrainDetails" asp-route-id="@Model.train_id">Деталі потяга</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Редагування</li>
+        </ol>
+    </nav>
+    
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger">
+            <ul>
+                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    <li>@error.ErrorMessage</li>
+                }
+            </ul>
+        </div>
+    }
+    
+    @if (carriagesWithBookings != null && carriagesWithBookings.Any())
+    {
+        <div class="alert alert-warning">
+            <h6><i class="bi bi-exclamation-triangle"></i> Увага! Наступні вагони мають активні бронювання:</h6>
+            <ul class="mb-0">
+                @foreach (var carriage in carriagesWithBookings)
+                {
+                    <li>Вагон №@carriage["carriage_number"] (@carriage["booking_count"] бронювань)</li>
+                }
+            </ul>
+            <small>Ці вагони не можна видаляти або змінювати їх тип.</small>
+        </div>
+    }
+    
+    <form method="post" id="editTrainForm">
+        <input type="hidden" name="id" value="@Model.train_id" />
+        
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">Основна інформація</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="trainNumber" class="form-label">Номер потяга</label>
+                        <input type="number" class="form-control" id="trainNumber" name="trainNumber" 
+                               value="@Model.train_number" required min="1">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="carriageCount" class="form-label">Кількість вагонів</label>
+                        <input type="number" class="form-control" id="carriageCount" name="carriageCount" 
+                               value="@Model.carriage_count" required min="1" readonly>
+                        <small class="form-text text-muted">Кількість вагонів буде автоматично підрахована</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Вагони потяга</h5>
+                <button type="button" class="btn btn-light btn-sm" id="addCarriage">
+                    <i class="bi bi-plus-lg"></i> Додати вагон
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="carriagesContainer">
+                    <!-- Існуючі вагони будуть завантажені тут -->
+                </div>
+                <div id="noCarriages" class="text-center py-3" style="display: none;">
+                    <p class="text-muted">Додайте вагони до потяга, використовуючи кнопку вище</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="d-flex justify-content-between mb-5">
+            <a asp-action="TrainDetails" asp-route-id="@Model.train_id" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Повернутися до деталей
+            </a>
+            <div>
+                <a asp-action="Index" class="btn btn-outline-secondary me-2">Скасувати</a>
+                <button type="submit" class="btn btn-success" id="submitBtn">
+                    <i class="bi bi-check-lg"></i> Зберегти зміни
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctypes = @Html.Raw(Json.Serialize(carriageTypes));
+            const ecarriages = @Html.Raw(Json.Serialize(existingCarriages));
+            const bookings = @Html.Raw(Json.Serialize(carriagesWithBookings ?? new List<Dictionary<string, object>>()));
+            const carriagesContainer = document.getElementById('carriagesContainer');
+            const noCarriages = document.getElementById('noCarriages');
+            const addCarriageBtn = document.getElementById('addCarriage');
+            const carriageCountInput = document.getElementById('carriageCount');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            let carriageCounter = 0;
+            let maxCarriageNumber = 0;
+            
+            // Функція для перевірки чи вагон має бронювання
+            function carriageHasBookings(carriageId) {
+                if (!bookings) return false;
+                return bookings.some(c => c.train_carriage_types_id === carriageId);
+            }
+            
+            // Функція для створення HTML вагона
+            function createCarriageHtml(carriage, isExisting = false) {
+                const carriageNumber = isExisting ? carriage.carriage_number : maxCarriageNumber + 1;
+                const selectedTypeId = isExisting ? carriage.carriage_type_id : '';
+                const carriageId = isExisting ? carriage.train_carriage_types_id : 0;
+                const hasBookings = isExisting && carriageHasBookings(carriageId);
+                
+                const hasBookingsClass = hasBookings ? 'border-danger' : '';
+                const hasBookingsText = hasBookings ? 
+                    '<span class="badge bg-danger ms-2">Є бронювання</span>' : '';
+                
+                return `
+                    <div class="carriage-item card mb-3 ${hasBookingsClass}" data-index="${carriageCounter}" 
+                         data-existing="${isExisting}" data-carriage-id="${carriageId}">
+                        <div class="card-header ${hasBookings ? 'bg-danger-subtle' : 'bg-light'} d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                Вагон #${carriageNumber}
+                                ${hasBookingsText}
+                            </h6>
+                            <button type="button" class="btn btn-outline-danger btn-sm remove-carriage" 
+                                    ${hasBookings ? 'disabled title="Неможливо видалити - є активні бронювання"' : ''}>
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Тип вагона</label>
+                                    <select name="carriageTypeIds" class="form-select carriage-type-select" required
+                                            ${hasBookings ? 'disabled title="Неможливо змінити тип - є активні бронювання"' : ''}>
+                                        <option value="" disabled ${!isExisting ? 'selected' : ''}>Оберіть тип вагона</option>
+                                        ${ctypes.map(ct => 
+                                            `<option value="${ct.carriage_type_id}" ${selectedTypeId == ct.carriage_type_id ? 'selected' : ''}>
+                                                ${ct.carriage_type} (${ct.seat_count} місць)
+                                            </option>`
+                                        ).join('')}
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Номер вагона в составі</label>
+                                    <input type="number" name="carriageNumbers" class="form-control" 
+                                           value="${carriageNumber}" min="1" required>
+                                    <!-- Приховане поле для ID існуючого вагона -->
+                                    <input type="hidden" name="existingCarriageIds" value="${carriageId}">
+                                </div>
+                            </div>
+                            ${hasBookings ? 
+                                '<div class="alert alert-warning alert-sm mb-0"><small><i class="bi bi-exclamation-triangle"></i> Цей вагон має активні бронювання і не може бути змінений або видалений</small></div>' : ''}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Функція для додавання нового вагона
+            function addCarriage(existingCarriage = null) {
+                carriageCounter++;
+                
+                if (!existingCarriage) {
+                    maxCarriageNumber = Math.max(maxCarriageNumber + 1, carriageCounter);
+                }
+                
+                const carriageDiv = document.createElement('div');
+                carriageDiv.innerHTML = createCarriageHtml(existingCarriage, !!existingCarriage);
+                carriagesContainer.appendChild(carriageDiv.firstElementChild);
+                
+                // Додаємо обробник для видалення вагона
+                const removeBtn = carriagesContainer.lastElementChild.querySelector('.remove-carriage');
+                if (removeBtn && !removeBtn.disabled) {
+                    removeBtn.addEventListener('click', function() {
+                        if (confirm('Ви впевнені, що хочете видалити цей вагон?')) {
+                            carriagesContainer.lastElementChild.remove();
+                            updateCarriageCount();
+                            updateCarriageNumbers();
+                        }
+                    });
+                }
+                
+                updateCarriageCount();
+                updateVisibility();
+            }
+            
+            // Завантажуємо існуючі вагони
+            if (ecarriages && ecarriages.length > 0) {
+                ecarriages.forEach(carriage => {
+                    maxCarriageNumber = Math.max(maxCarriageNumber, carriage.carriage_number);
+                    addCarriage(carriage);
+                });
+            }
+            
+            // Функція для оновлення лічильника вагонів
+            function updateCarriageCount() {
+                const carriageItems = document.querySelectorAll('.carriage-item');
+                carriageCountInput.value = carriageItems.length;
+                submitBtn.disabled = carriageItems.length === 0;
+            }
+            
+            // Функція для перенумерації вагонів після видалення
+            function updateCarriageNumbers() {
+                const carriageItems = document.querySelectorAll('.carriage-item');
+                carriageItems.forEach((item, index) => {
+                    const header = item.querySelector('h6');
+                    const isExisting = item.dataset.existing === 'true';
+                    const hasBookings = item.classList.contains('border-danger');
+                    const bookingsBadge = hasBookings ? '<span class="badge bg-danger ms-2">Є бронювання</span>' : '';
+                    
+                    if (!isExisting) {
+                        const currentNumber = index + 1;
+                        header.innerHTML = `Вагон #${currentNumber}${bookingsBadge}`;
+                        item.querySelector('input[name="carriageNumbers"]').value = currentNumber;
+                    }
+                });
+            }
+            
+            // Функція для оновлення видимості елементів
+            function updateVisibility() {
+                const carriageItems = document.querySelectorAll('.carriage-item');
+                if (carriageItems.length === 0) {
+                    noCarriages.style.display = 'block';
+                } else {
+                    noCarriages.style.display = 'none';
+                }
+            }
+            
+            // Додаємо обробник для кнопки додавання вагона
+            addCarriageBtn.addEventListener('click', () => addCarriage());
+            
+            // Перевірка форми перед відправкою
+            document.getElementById('editTrainForm').addEventListener('submit', function(e) {
+                const carriageItems = document.querySelectorAll('.carriage-item');
+                if (carriageItems.length === 0) {
+                    e.preventDefault();
+                    alert('Потяг має мати хоча б один вагон!');
+                    return;
+                }
+                
+                // Перевірка вибору типів вагонів
+                let allTypesSelected = true;
+                document.querySelectorAll('.carriage-type-select').forEach(select => {
+                    if (!select.value && !select.disabled) {
+                        allTypesSelected = false;
+                    }
+                });
+                
+                if (!allTypesSelected) {
+                    e.preventDefault();
+                    alert('Оберіть тип для кожного вагона!');
+                    return;
+                }
+                
+                // Перевірка унікальності номерів вагонів
+                const carriageNumbers = [];
+                document.querySelectorAll('input[name="carriageNumbers"]').forEach(input => {
+                    carriageNumbers.push(parseInt(input.value));
+                });
+                
+                const uniqueNumbers = [...new Set(carriageNumbers)];
+                if (carriageNumbers.length !== uniqueNumbers.length) {
+                    e.preventDefault();
+                    alert('Номери вагонів повинні бути унікальними!');
+                    return;
+                }
+            });
+            
+            // Ініціалізація
+            updateCarriageCount();
+            updateVisibility();
+        });
+    </script>
+} *@

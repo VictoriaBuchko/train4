@@ -1,0 +1,157 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+@model train2.Models.Client
+@{
+    ViewData["Title"] = "Створення клієнта";
+}
+
+<div class="container">
+    <div class="row mt-4 justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="mb-0">
+                            <i class="bi bi-person-plus"></i> Створення нового клієнта
+                        </h3>
+                        <a asp-action="Index" class="btn btn-light btn-sm">
+                            <i class="bi bi-arrow-left"></i> Назад
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form asp-action="CreateClient" method="post" id="createClientForm">
+                        <div class="text-danger">@Html.ValidationSummary(false)</div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="client_name" class="form-label">Ім'я *</label>
+                                <input asp-for="client_name" class="form-control" required />
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="client_surname" class="form-label">Прізвище *</label>
+                                <input asp-for="client_surname" class="form-control" required />
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="client_patronymic" class="form-label">По-батькові *</label>
+                                <input asp-for="client_patronymic" class="form-control" required />
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="login" class="form-label">Логін *</label>
+                                <input asp-for="login" class="form-control" required />
+                                <div class="form-text">Унікальний логін для входу в систему</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="password" class="form-label">Пароль *</label>
+                                <div class="input-group">
+                                    <input type="password" id="password" name="password" class="form-control" required />
+                                    <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('password')">
+                                        <i class="bi bi-eye" id="password-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="confirmPassword" class="form-label">Підтвердження пароля *</label>
+                                <div class="input-group">
+                                    <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" required />
+                                    <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('confirmPassword')">
+                                        <i class="bi bi-eye" id="confirmPassword-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="email" class="form-label">Email</label>
+                                <input asp-for="email" class="form-control" type="email" />
+                                <div class="form-text">Необов'язково</div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="phone_number" class="form-label">Номер телефону</label>
+                                <input asp-for="phone_number" class="form-control"
+                                       pattern="\+380\((50|63|67|68|93|95|96|97|98)\)[0-9]{7}"
+                                       placeholder="+380(67)1234567" />
+                                <div class="form-text">Формат: +380(XX)XXXXXXX</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Тип оплати</label>
+                                <select id="paymentType" class="form-select">
+                                    <option value="">Вибрати тип оплати</option>
+                                    <option value="card">Банківська карта</option>
+                                    <option value="iban">IBAN рахунок</option>
+                                    <option value="cash">Готівкою</option>
+                                    <option value="none">Без платіжної інформації</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Платежная информация -->
+                        <div id="paymentContainer">
+                            <!-- Поля для банківської карти -->
+                            <div id="cardContainer" class="payment-section" style="display: none;">
+                                <h6 class="text-primary mb-3">Інформація про банківську карту</h6>
+                                <div class="row">
+                                    <div class="col-12 mb-2">
+                                        <label for="cardNumber" class="form-label">Номер карти</label>
+                                        <input type="text" id="cardNumber" class="form-control" 
+                                               placeholder="1111 1111 1111 1111" 
+                                               maxlength="19" />
+                                    </div>
+                                    <div class="col-6">
+                                        <label for="cardMonth" class="form-label">Місяць</label>
+                                        <input type="text" id="cardMonth" class="form-control" 
+                                               placeholder="MM" maxlength="2" />
+                                    </div>
+                                    <div class="col-6">
+                                        <label for="cardYear" class="form-label">Рік</label>
+                                        <input type="text" id="cardYear" class="form-control" 
+                                               placeholder="YY" maxlength="2" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Поле для IBAN -->
+                            <div id="ibanContainer" class="payment-section" style="display: none;">
+                                <h6 class="text-primary mb-3">IBAN рахунок</h6>
+                                <label for="ibanField" class="form-label">IBAN</label>
+                                <input type="text" id="ibanField" class="form-control" 
+                                       placeholder="UA21 3223 1300 0002 6007 2335 6600 1" 
+                                       maxlength="34" />
+                            </div>
+                        </div>
+
+                        <!-- Скрытое поле для платежной информации -->
+                        <input type="hidden" asp-for="payment_info" id="hiddenPaymentInfo" />
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-person-plus"></i> Створити клієнта
+                            </button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Повернутися до панелі
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/maneger/CreateClient.css" />
+}
+
+@section Scripts {
+    <script src="~/js/pages/maneger/CreateClient.js"></script>
+}

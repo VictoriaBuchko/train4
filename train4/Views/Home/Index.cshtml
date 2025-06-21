@@ -1,0 +1,253 @@
+﻿@{
+    ViewData["Title"] = "Пошук квитків";
+    var stations = ViewBag.Stations as List<train2.Models.Stations>;
+    var isLoggedIn = ViewBag.IsLoggedIn as bool? ?? false;
+}
+
+<div class="header-container">
+    <div class="logo">
+        <a href="/">
+            <i class="bi bi-train-front"></i> ЗалізничніКвитки
+        </a>
+    </div>
+    
+    <div class="top-nav">
+    @if (isLoggedIn)
+    {
+        <div class="user-menu">
+            @if (ViewBag.UserRole == "group_admins")
+            {
+                <a asp-controller="Admin" asp-action="AdminMenu" class="nav-button admin-button">
+                    <i class="bi bi-gear"></i> Адмін-панель
+                </a>
+            }
+            @if (ViewBag.UserRole == "group_managers")
+            {
+                <a asp-controller="Manager" asp-action="Index" class="nav-button manager-button">
+                    <i class="bi bi-person-badge"></i> Панель менеджера
+                </a>
+            }
+            @if (ViewBag.UserRole == "group_accountants")
+            {
+                <a asp-controller="Accountant" asp-action="Index" class="nav-button manager-button">
+                    <i class="bi bi-person-badge"></i> Панель бухгалтера
+                </a>
+            }
+            <a asp-controller="Account" asp-action="Logout" class="nav-button">Вийти</a>
+            <a asp-controller="Account" asp-action="Profile" class="nav-icon" title="Особистий кабінет">
+                <i class="bi bi-person-circle"></i>
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="auth-buttons">
+            <a asp-controller="Account" asp-action="Login" class="nav-button">Увійти</a>
+            <a asp-controller="Account" asp-action="Register" class="nav-button secondary">Реєстрація</a>
+        </div>
+    }
+</div>
+</div>
+
+<div class="hero-section">
+    <div class="hero-content">
+        <h1>Квитки на потяг онлайн</h1>
+        <p>Швидкий та зручний пошук залізничних квитків по всій країні</p>
+    </div>
+</div>
+
+<div class="search-container">
+    <form asp-action="Index" method="post" class="search-form">
+        <div class="form-section">
+            <label for="fromStation">Звідки</label>
+            <select name="fromStation" required>
+                <option disabled selected>Оберіть станцію</option>
+                @foreach (var station in stations)
+                {
+                    <option value="@station.station_name">@station.station_name</option>
+                }
+            </select>
+        </div>
+
+        <div class="form-section">
+            <label for="toStation">Куди</label>
+            <select name="toStation" required>
+                <option disabled selected>Оберіть станцію</option>
+                @foreach (var station in stations)
+                {
+                    <option value="@station.station_name">@station.station_name</option>
+                }
+            </select>
+        </div>
+
+        <div class="form-section">
+            <label for="date">Дата поїздки</label>
+            <input type="date" name="date" min="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+        </div>
+
+        <div class="form-section">
+            <button type="submit" class="search-button">
+                <i class="bi bi-search"></i> Знайти
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="features-section">
+
+    <div class="feature">
+        <i class="bi bi-ticket-perforated"></i>
+        <h3>Онлайн бронювання</h3>
+        <p>Найпопулярніші маршрути</p>
+    </div>
+
+</div>
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/home/Index.css" />
+}
+<script>
+    // Функції для роботи з localStorage - тільки збереження/відновлення пошуку
+    const SearchState = {
+        save: function (fromStation, toStation, date) {
+            const searchData = {
+                fromStation: fromStation,
+                toStation: toStation,
+                date: date,
+                timestamp: new Date().getTime()
+            };
+            localStorage.setItem('lastSearch', JSON.stringify(searchData));
+        },
+
+        restore: function () {
+            const saved = localStorage.getItem('lastSearch');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    // Перевіряємо, чи дата не старіша за 1 годину
+                    const oneHourAgo = new Date().getTime() - (1 * 60 * 60 * 1000);
+                    if (data.timestamp > oneHourAgo) {
+                        return data;
+                    }
+                    else {
+                        // Видаляємо старі дані
+                        localStorage.removeItem('lastSearch');
+                    }
+                } catch (e) {
+                    console.error('Помилка відновлення даних пошуку:', e);
+                    localStorage.removeItem('lastSearch');
+                }
+            }
+            return null;
+        },
+
+        validateStations: function (searchData, availableStations) {
+            // Перевіряємо чи існують вказані станції в поточному списку
+            const stationNames = availableStations.map(station => station.textContent.trim());
+
+            return stationNames.includes(searchData.fromStation) &&
+                stationNames.includes(searchData.toStation);
+        }
+    };
+
+    // Відновлення стану форми при завантаженні сторінки
+    document.addEventListener('DOMContentLoaded', function () {
+        const savedSearch = SearchState.restore();
+
+        if (savedSearch) {
+            const fromSelect = document.querySelector('select[name="fromStation"]');
+            const toSelect = document.querySelector('select[name="toStation"]');
+            const dateInput = document.querySelector('input[name="date"]');
+
+            // Отримуємо всі доступні станції для перевірки
+            const fromOptions = Array.from(fromSelect.options);
+            const toOptions = Array.from(toSelect.options);
+
+            // Перевіряємо чи існують збережені станції в поточному списку
+            const isFromStationValid = SearchState.validateStations(savedSearch, fromOptions);
+            const isToStationValid = SearchState.validateStations(savedSearch, toOptions);
+
+            // Відновлюємо тільки якщо всі дані валідні
+            if (isFromStationValid && isToStationValid) {
+                // Перевіряємо чи дата не в минулому
+                const searchDate = new Date(savedSearch.date);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                if (searchDate >= today) {
+                    fromSelect.value = savedSearch.fromStation;
+                    toSelect.value = savedSearch.toStation;
+                    dateInput.value = savedSearch.date;
+
+                    // Показуємо ненав'язливе повідомлення
+                    showRestoreNotification();
+                } else {
+                    // Видаляємо застарілі дані
+                    localStorage.removeItem('lastSearch');
+                }
+            } else {
+                // Видаляємо дані з неіснуючими станціями
+                localStorage.removeItem('lastSearch');
+            }
+        }
+
+        // Збереження при відправці форми
+        const searchForm = document.querySelector('.search-form');
+        if (searchForm) {
+            searchForm.addEventListener('submit', function (e) {
+                const fromStation = document.querySelector('select[name="fromStation"]').value;
+                const toStation = document.querySelector('select[name="toStation"]').value;
+                const date = document.querySelector('input[name="date"]').value;
+
+                if (fromStation && toStation && date) {
+                    SearchState.save(fromStation, toStation, date);
+                }
+            });
+        }
+    });
+
+    function showRestoreNotification() {
+        const notification = document.createElement('div');
+        notification.innerHTML = `
+            <div class="restore-notification">
+                <i class="bi bi-info-circle"></i>
+                Відновлено ваш останній пошук
+                <button type="button" onclick="this.parentElement.remove()" style="background: none; border: none; float: right; color: #666; cursor: pointer;">×</button>
+            </div>
+        `;
+
+        const container = document.querySelector('.search-container');
+        if (container) {
+            container.insertBefore(notification, container.firstChild);
+
+            // Автоматично приховуємо через 4 секунди
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.style.opacity = '0';
+                    setTimeout(() => notification.remove(), 300);
+                }
+            }, 4000);
+        }
+    }
+</script>
+
+<style>
+    .restore-notification {
+        background: #e3f2fd;
+        border: 1px solid #90caf9;
+        color: #1565c0;
+        padding: 10px 15px;
+        border-radius: 6px;
+        margin-bottom: 15px;
+        font-size: 14px;
+        transition: opacity 0.3s ease;
+        position: relative;
+    }
+
+        .restore-notification i {
+            margin-right: 8px;
+        }
+
+        .restore-notification:hover {
+            background: #e1f5fe;
+        }
+</style>

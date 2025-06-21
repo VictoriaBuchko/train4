@@ -1,0 +1,586 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+
+@{
+    ViewData["Title"] = "Управління розкладом";
+    var schedules = Model as List<Dictionary<string, object>>;
+    var trains = ViewBag.Trains as List<Dictionary<string, object>>;
+}
+
+<style>
+    /* Базовые стили */
+    body {
+        font-family: 'Segoe UI', sans-serif;
+        margin: 0;
+        padding: 0;
+        color: #333;
+        background-color: #f8f9fa;
+    }
+
+    /* Кнопки */
+    .btn {
+        padding: 8px 16px;
+        border-radius: 5px;
+        font-weight: 500;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary, .btn-success {
+        background-color: #1a3dc1;
+        color: white;
+    }
+
+        .btn-primary:hover, .btn-success:hover {
+            background-color: #0f2fa1;
+            color: white;
+        }
+
+    .btn-warning {
+        background-color: #ffc107;
+        color: #333;
+    }
+
+    .btn-info {
+        background-color: #17a2b8;
+        color: white;
+    }
+
+    .btn-outline-primary {
+        background-color: transparent;
+        color: #1a3dc1;
+        border: 1px solid #1a3dc1;
+    }
+
+        .btn-outline-primary:hover {
+            background-color: #1a3dc1;
+            color: white;
+        }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .btn-outline-secondary {
+        background-color: transparent;
+        color: #6c757d;
+        border: 1px solid #6c757d;
+    }
+
+    .btn-outline-info {
+        background-color: transparent;
+        color: #17a2b8;
+        border: 1px solid #17a2b8;
+    }
+
+        .btn-outline-info:hover {
+            background-color: #17a2b8;
+            color: white;
+        }
+
+    .btn-filter {
+        background-color: #1a3dc1;
+        color: white;
+    }
+
+        .btn-filter:hover {
+            background-color: #0f2fa1;
+            color: white;
+        }
+
+    /* Карточки */
+    .card {
+        background: white;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        border: 1px solid #ddd;
+    }
+
+    .card-header {
+        background-color: #1a3dc1;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 5px 5px 0 0;
+        border-bottom: none;
+    }
+
+    .card-body {
+        padding: 20px;
+    }
+
+    .filters-card {
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        margin-bottom: 25px;
+    }
+
+    /* Формы */
+    .form-control, .form-select {
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background-color: white;
+        margin-bottom: 10px;
+    }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #1a3dc1;
+            box-shadow: 0 0 0 2px rgba(26, 61, 193, 0.2);
+            background-color: white;
+        }
+
+    /* Таблицы */
+    .table {
+        background: white;
+        border-radius: 5px;
+        overflow: hidden;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        margin-bottom: 0;
+    }
+
+        .table th {
+            background-color: #1a3dc1;
+            color: white;
+            padding: 12px;
+            border: none;
+            font-weight: 600;
+        }
+
+        .table td {
+            padding: 10px 12px;
+            border-color: #e9ecef;
+            vertical-align: middle;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+    .schedule-table {
+        background: white;
+        border-radius: 5px;
+        overflow: hidden;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    /* Алерты */
+    .alert {
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+        border: none;
+    }
+
+    .alert-success {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .alert-danger {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    .alert-warning {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+
+    .alert-info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+    }
+
+    /* Бейджи */
+    .badge {
+        padding: 4px 8px;
+        border-radius: 10px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
+    .bg-success {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .bg-info {
+        background-color: #17a2b8;
+        color: white;
+    }
+
+    .bg-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .weekdays-badge {
+        background-color: #17a2b8;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 10px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .tickets-count {
+        background-color: #1a3dc1;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 10px;
+        font-weight: 600;
+    }
+
+    /* Заголовки */
+    h1, h2, h3, h4, h5, h6 {
+        color: #333;
+    }
+
+    .text-primary {
+        color: #1a3dc1 !important;
+    }
+
+    .card-header.custom-white {
+        color: white;
+    }
+</style>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="display-5 text-primary">
+            <i class="bi bi-calendar3"></i> Управління розкладом
+        </h1>
+        <a asp-controller="Admin" asp-action="AdminMenu" class="btn btn-outline-dark">
+            <i class="bi bi-arrow-left-circle"></i> Назад до меню адміністратора
+        </a>
+    </div>
+
+    @Html.AntiForgeryToken()
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["InfoMessage"] != null)
+    {
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <i class="bi bi-info-circle-fill"></i> @TempData["InfoMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center my-4">
+        <h2>Список розкладів</h2>
+        <a asp-action="CreateSchedule" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Створити новий розклад
+        </a>
+    </div>
+
+    <!-- Фільтри -->
+    <div class="card filters-card">
+        <div class="card-header" style="color: white;>
+            <h5 class="mb-0">
+                <i class="bi bi-funnel"></i> Фільтри та пошук
+            </h5>
+        </div>
+
+        <div class="card-body">
+            <form method="get" class="row g-3" id="filterForm">
+                <div class="col-md-3">
+                    <label for="trainFilter" class="form-label">Потяг</label>
+                    <select class="form-select" id="trainFilter" name="trainId">
+                        <option value="">Всі потяги</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="fromDateFilter" class="form-label">З дати</label>
+                    <input type="date" class="form-control" id="fromDateFilter" name="fromDate"
+                           value="@Context.Request.Query["fromDate"]">
+                </div>
+                <div class="col-md-3">
+                    <label for="toDateFilter" class="form-label">До дати</label>
+                    <input type="date" class="form-control" id="toDateFilter" name="toDate"
+                           value="@Context.Request.Query["toDate"]">
+                </div>
+                <div class="col-md-3">
+                    <label for="statusFilter" class="form-label">Статус потяга</label>
+                    <select class="form-select" id="statusFilter" name="isActive">
+                        <option value="">Всі статуси</option>
+                        @{
+                            var isActive = Context.Request.Query["isActive"].ToString();
+                        }
+                        <option value="true" selected="@(isActive == "true" ? "selected" : null)">Активні</option>
+                        <option value="false" selected="@(isActive == "false" ? "selected" : null)">Неактивні</option>
+
+                    </select>
+                </div>
+                <div class="col-12">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button type="submit" class="btn btn-filter">
+                            <i class="bi bi-search"></i> Застосувати фільтри
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-clockwise"></i> Скинути
+                        </a>
+                        <button type="button" class="btn btn-outline-info" id="quickFilterToday">
+                            <i class="bi bi-calendar-day"></i> Сьогодні
+                        </button>
+                        <button type="button" class="btn btn-outline-info" id="quickFilterWeek">
+                            <i class="bi bi-calendar-week"></i> Цей тиждень
+                        </button>
+                        <button type="button" class="btn btn-outline-info" id="quickFilterMonth">
+                            <i class="bi bi-calendar-month"></i> Цей місяць
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (schedules == null || !schedules.Any())
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> У системі ще немає жодного розкладу.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-hover schedule-table">
+                <thead>
+                    <tr>
+                        <th>Потяг №</th>
+                        <th>Дата</th>
+                        <th>Дні тижня</th>
+                        <th>Час відправлення</th>
+                        <th>Статус потяга</th>
+                        <th>Квитків продано</th>
+                        <th width="250px">Дії</th>
+                    </tr>
+                </thead>
+                <!-- Исправленная часть таблицы -->
+                <tbody>
+                    @foreach (var schedule in schedules.OrderBy(s => (DateTime)s["date"]))
+                    {
+                        <tr>
+                            <td><strong>№@schedule["train_number"]</strong></td>
+                            <td>
+                                @{
+                                    var scheduleDate = (DateTime)schedule["date"];
+                                }
+                                @scheduleDate.ToString("dd.MM.yyyy")
+                            </td>
+                            <td>
+                                <span class="weekdays-badge">@schedule["weekdays"]</span>
+                            </td>
+                            <td>
+                                @{
+                                    var departureTime = (TimeSpan)schedule["departure_time"];
+                                }
+                                <strong>@departureTime.ToString(@"hh\:mm")</strong>
+                            </td>
+                            <td>
+                                <span class="badge @((bool)schedule["train_is_active"] ? "bg-success" : "bg-secondary")">
+                                    @((bool)schedule["train_is_active"] ? "Активний" : "Неактивний")
+                                </span>
+                            </td>
+                            <td>
+                                <span class="tickets-count">@schedule["tickets_count"]</span>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a asp-action="ScheduleDetails" asp-route-id="@schedule["schedule_id"]"
+                                       class="btn btn-sm btn-info" title="Переглянути деталі">
+                                        <i class="bi bi-info-circle"></i> Деталі
+                                    </a>
+
+                                    @if (Convert.ToInt32(schedule["tickets_count"]) == 0 && scheduleDate >= DateTime.Today)
+                                    {
+                                        <a asp-action="EditSchedule" asp-route-id="@schedule["schedule_id"]"
+                                           class="btn btn-sm btn-warning" title="Редагувати розклад">
+                                            <i class="bi bi-pencil"></i> Редагувати
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <button type="button" class="btn btn-sm btn-secondary" disabled
+                                                title="Неможливо редагувати - є продані квитки або дата в минулому">
+                                            <i class="bi bi-lock"></i> Заблоковано
+                                        </button>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Устанавливаем минимальную дату
+        const today = new Date().toISOString().split('T')[0];
+        const fromDateInput = document.getElementById('fromDateFilter');
+        const toDateInput = document.getElementById('toDateFilter');
+
+        if (fromDateInput) fromDateInput.min = today;
+        if (toDateInput) toDateInput.min = today;
+
+        // Загружаем поезда для фильтра
+        loadTrainsForFilter();
+
+        // Быстрые фильтры
+        setupQuickFilters();
+    });
+
+    function loadTrainsForFilter() {
+        const trainFilter = document.getElementById('trainFilter');
+        if (!trainFilter) return;
+
+        // Получаем текущий выбранный поезд из URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const selectedTrainId = urlParams.get('trainId');
+
+        fetch('/Schedule/GetActiveTrains')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(trains => {
+                // Очищаем существующие опции (кроме первой)
+                while (trainFilter.children.length > 1) {
+                    trainFilter.removeChild(trainFilter.lastChild);
+                }
+
+                // Добавляем новые опции
+                if (trains && trains.length > 0) {
+                    trains.forEach(train => {
+                        const option = document.createElement('option');
+                        option.value = train.train_id;
+                        option.textContent = `Потяг №${train.train_number} (${train.carriage_count} вагонів)`;
+
+                        // Устанавливаем выбранный элемент
+                        if (selectedTrainId && selectedTrainId == train.train_id) {
+                            option.selected = true;
+                        }
+
+                        trainFilter.appendChild(option);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Помилка завантаження списку потягів:', error);
+
+                // Если не удалось загрузить через AJAX, используем серверные данные
+    @if (trains != null && trains.Any())
+    {
+        <text>
+                        const serverTrains = @Html.Raw(Json.Serialize(trains));
+                    serverTrains.forEach(train => {
+                        const option = document.createElement('option');
+                        option.value = train.train_id;
+                        option.textContent = `Потяг №${train.train_number} (${train.carriage_count} вагонів)`;
+
+                        if (selectedTrainId && selectedTrainId == train.train_id) {
+                            option.selected = true;
+                        }
+
+                        trainFilter.appendChild(option);
+                    });
+        </text>
+    }
+            });
+    }
+
+    function setupQuickFilters() {
+        // Быстрый фильтр "Сегодня"
+        document.getElementById('quickFilterToday')?.addEventListener('click', function () {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('fromDateFilter').value = today;
+            document.getElementById('toDateFilter').value = today;
+            document.getElementById('filterForm').submit();
+        });
+
+        // Быстрый фильтр "Эта неделя"
+        document.getElementById('quickFilterWeek')?.addEventListener('click', function () {
+            const today = new Date();
+            const currentDay = today.getDay();
+            const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay; // Понедельник как начало недели
+
+            const monday = new Date(today);
+            monday.setDate(today.getDate() + mondayOffset);
+
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+
+            document.getElementById('fromDateFilter').value = monday.toISOString().split('T')[0];
+            document.getElementById('toDateFilter').value = sunday.toISOString().split('T')[0];
+            document.getElementById('filterForm').submit();
+        });
+
+        // Быстрый фильтр "Этот месяц"
+        document.getElementById('quickFilterMonth')?.addEventListener('click', function () {
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+            document.getElementById('fromDateFilter').value = firstDay.toISOString().split('T')[0];
+            document.getElementById('toDateFilter').value = lastDay.toISOString().split('T')[0];
+            document.getElementById('filterForm').submit();
+        });
+    }
+
+    // Функция для показа уведомлений
+    function showNotification(message, type = 'info') {
+        const alertClass = type === 'success' ? 'alert-success' :
+            type === 'error' ? 'alert-danger' : 'alert-info';
+        const icon = type === 'success' ? 'bi-check-circle-fill' :
+            type === 'error' ? 'bi-exclamation-triangle-fill' : 'bi-info-circle-fill';
+
+        const alertHtml = `
+            <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                <i class="bi ${icon}"></i> ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+
+        const container = document.querySelector('.container');
+        if (container) {
+            const existingAlerts = container.querySelectorAll('.alert');
+            existingAlerts.forEach(alert => alert.remove());
+
+            container.insertAdjacentHTML('afterbegin', alertHtml);
+
+            setTimeout(() => {
+                const alert = container.querySelector('.alert');
+                if (alert) {
+                    alert.remove();
+                }
+            }, 5000);
+        }
+    }
+</script>

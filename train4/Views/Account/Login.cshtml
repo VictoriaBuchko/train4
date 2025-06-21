@@ -1,0 +1,221 @@
+﻿@{
+    ViewData["Title"] = "Вхід у систему";
+}
+
+<div class="container">
+    <div class="row mt-4 justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Вхід у систему</h3>
+                </div>
+                <div class="card-body">
+                    <!-- Уведомления об ошибках -->
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            @TempData["ErrorMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
+                            @TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <form asp-action="Login" method="post" id="loginForm">
+                        <div class="mb-3">
+                            <label for="login" class="form-label">
+                                <i class="fas fa-user me-1"></i>Логін
+                            </label>
+                            <input type="text"
+                                   id="login"
+                                   name="login"
+                                   class="form-control"
+                                   placeholder="Введіть ваш логін"
+                                   value="@ViewBag.Login"
+                                   required />
+                            <div class="invalid-feedback">
+                                Будь ласка, введіть логін
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">
+                                <i class="fas fa-envelope me-1"></i>Email
+                            </label>
+                            <input type="email"
+                                   id="email"
+                                   name="email"
+                                   class="form-control"
+                                   placeholder="example@email.com"
+                                   value="@ViewBag.Email"
+                                   required />
+                            <div class="invalid-feedback">
+                                Будь ласка, введіть правильний email
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">
+                                <i class="fas fa-lock me-1"></i>Пароль
+                            </label>
+                            <div class="input-group">
+                                <input type="password"
+                                       id="password"
+                                       name="password"
+                                       class="form-control"
+                                       placeholder="Введіть ваш пароль"
+                                       required />
+                                <button class="btn btn-outline-secondary"
+                                        type="button"
+                                        id="togglePassword">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="invalid-feedback">
+                                Будь ласка, введіть пароль
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 mb-3">
+                            <button type="submit" class="btn btn-primary" id="loginBtn">
+                                <i class="fas fa-sign-in-alt me-2"></i>Увійти
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr>
+
+                    <div class="text-center">
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="fas fa-home me-2"></i>Повернутися на головну
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Показ/скрытие пароля
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordField = document.getElementById('password');
+
+        if (togglePassword && passwordField) {
+            togglePassword.addEventListener('click', function () {
+                const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordField.setAttribute('type', type);
+
+                const icon = this.querySelector('i');
+                if (type === 'password') {
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                } else {
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                }
+            });
+        }
+
+        // Валидация формы
+        const form = document.getElementById('loginForm');
+        const loginBtn = document.getElementById('loginBtn');
+
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                const login = document.getElementById('login').value.trim();
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value.trim();
+
+                if (!login || !email || !password) {
+                    e.preventDefault();
+
+                    // Добавляем класс validation
+                    form.classList.add('was-validated');
+
+                    // Показываем сообщение
+                    showMessage('Будь ласка, заповніть всі поля', 'danger');
+                    return;
+                }
+
+                // Показываем индикатор загрузки
+                if (loginBtn) {
+                    loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Вхід...';
+                    loginBtn.disabled = true;
+                }
+            });
+        }
+
+        // Автоматическое скрытие уведомлений через 5 секунд
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            setTimeout(() => {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            }, 5000);
+        });
+    });
+
+    function showMessage(message, type) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+        const form = document.getElementById('loginForm');
+        form.parentNode.insertBefore(alertDiv, form);
+
+        // Автоматическое скрытие через 3 секунды
+        setTimeout(() => {
+            const bsAlert = new bootstrap.Alert(alertDiv);
+            bsAlert.close();
+        }, 3000);
+    }
+</script>
+
+<style>
+    .card {
+        border: none;
+        border-radius: 15px;
+    }
+
+    .card-header {
+        border-radius: 15px 15px 0 0 !important;
+    }
+
+    .btn {
+        border-radius: 8px;
+    }
+
+    .form-control {
+        border-radius: 8px;
+    }
+
+    .input-group .btn {
+        border-radius: 0 8px 8px 0;
+    }
+
+    .alert {
+        border-radius: 8px;
+    }
+
+    .was-validated .form-control:invalid {
+        border-color: #dc3545;
+    }
+
+    .was-validated .form-control:valid {
+        border-color: #198754;
+    }
+</style>

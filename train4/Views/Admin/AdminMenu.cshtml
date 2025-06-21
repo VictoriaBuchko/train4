@@ -1,0 +1,62 @@
+﻿@{
+    ViewData["Title"] = "Адмін-панель";
+}
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between mb-4 align-items-center">
+        <h2 class="text-primary">
+            <i class="bi bi-person-gear"></i> Панель адміністратора
+        </h2>
+        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-dark">
+            <i class="bi bi-house-door"></i> На головну сторінку
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-primary shadow-sm h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-train-front display-4 text-primary mb-3"></i>
+                    <h5 class="card-title">Створити потяг</h5>
+                    <a asp-controller="Admin" asp-action="Index" class="btn btn-primary mt-2 w-100">Перейти</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-success shadow-sm h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-signpost display-4 text-success mb-3"></i>
+                    <h5 class="card-title">Маршрути</h5>
+                    <a asp-controller="Admin" asp-action="RouteIndex" class="btn btn-success mt-2 w-100">Перейти</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-success shadow-sm h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-signpost display-4 text-success mb-3"></i>
+                    <h5 class="card-title">Розклад</h5>
+                    <a asp-controller="Schedule" asp-action="Index" class="btn btn-success mt-2 w-100">Перейти</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-secondary shadow-sm h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-geo-alt display-4 text-secondary mb-3"></i>
+                    <h5 class="card-title">Редагувати станції</h5>
+                    <a asp-controller="Admin" asp-action="ManageStations" class="btn btn-secondary mt-2 w-100">Перейти</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-warning shadow-sm h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-bar-chart-line display-4 text-warning mb-3"></i>
+                    <h5 class="card-title">Аналітика</h5>
+                    <a asp-controller="Admin" asp-action="Analytics" class="btn btn-warning mt-2 w-100 text-white">Перейти</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

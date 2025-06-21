@@ -1,0 +1,286 @@
+﻿@model List<train2.Models.Train>
+@{
+    ViewData["Title"] = "Адміністрування потягів";
+}
+<style>
+    /* Базовые стили для согласованности */
+    .text-primary {
+        color: #1a3dc1 !important;
+    }
+
+    /* Стили для таблицы */
+    .table {
+        background: white;
+        border-radius: 5px;
+        overflow: hidden;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+        .table th {
+            background-color: #1a3dc1;
+            color: white;
+            padding: 12px;
+            border: none;
+            font-weight: 600;
+        }
+
+        .table td {
+            padding: 10px 12px;
+            border-color: #e9ecef;
+            vertical-align: middle;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+    /* Бейджи */
+    .badge {
+        padding: 4px 8px;
+        border-radius: 10px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
+    .bg-success {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .bg-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    /* Кнопки */
+    .btn-primary {
+        background-color: #1a3dc1;
+        border-color: #1a3dc1;
+    }
+
+        .btn-primary:hover {
+            background-color: #0f2fa1;
+            border-color: #0f2fa1;
+        }
+
+    .btn-info {
+        background-color: #17a2b8;
+        border-color: #17a2b8;
+    }
+
+    .btn-warning {
+        background-color: #ffc107;
+        border-color: #ffc107;
+        color: #333;
+    }
+
+    /* Алерты */
+    .alert {
+        border-radius: 5px;
+        border: none;
+    }
+</style>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="display-5 text-primary">
+            <i class="bi bi-train-front"></i> Адміністрування потягів
+        </h1>
+        <a asp-controller="Admin" asp-action="AdminMenu" class="btn btn-outline-dark">
+            <i class="bi bi-arrow-left-circle"></i> Назад до меню адміністратора
+        </a>
+    </div>
+
+    @Html.AntiForgeryToken()
+
+    @* ЗАМЕНИТЕ СТАРЫЕ СООБЩЕНИЯ НА ЭТИ УЛУЧШЕННЫЕ *@
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["InfoMessage"] != null)
+    {
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <i class="bi bi-info-circle-fill"></i> @TempData["InfoMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center my-4">
+        <h2>Список потягів</h2>
+        <a asp-action="CreateTrain" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Створити новий потяг
+        </a>
+    </div>
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="alert alert-info">
+            У системі ще немає жодного потяга.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Номер потяга</th>
+                        <th>Кількість вагонів</th>
+                        <th>Статус</th>
+                        <th width="300px">Дії</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var train in Model)
+                    {
+                        <tr>
+                            <td>@train.train_id</td>
+                            <td>@train.train_number</td>
+                            <td>@train.carriage_count</td>
+                            <td>
+                                <span class="badge @(train.is_active ? "bg-success" : "bg-secondary")" 
+                                      id="status-badge-@train.train_id">
+                                    @(train.is_active ? "Активний" : "Неактивний")
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a asp-action="TrainDetails" asp-route-id="@train.train_id" 
+                                       class="btn btn-sm btn-info" title="Переглянути деталі">
+                                        <i class="bi bi-info-circle"></i> Деталі
+                                    </a>
+                                    <a asp-action="EditTrain" asp-route-id="@train.train_id" 
+                                       class="btn btn-sm btn-warning" title="Редагувати потяг">
+                                        <i class="bi bi-pencil"></i> Редагувати
+                                    </a>
+                                    <button type="button" 
+                                            class="btn btn-sm @(train.is_active ? "btn-danger" : "btn-success") toggle-status-btn" 
+                                            data-train-id="@train.train_id"
+                                            id="toggle-btn-@train.train_id"
+                                            title="@(train.is_active ? "Деактивувати потяг" : "Активувати потяг")">
+                                        <i class="bi @(train.is_active ? "bi-pause-circle" : "bi-play-circle")"></i>
+                                        @(train.is_active ? "Деактивувати" : "Активувати")
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Обробник для кнопок зміни статусу
+            document.querySelectorAll('.toggle-status-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const trainId = parseInt(this.dataset.trainId);
+                    const originalHtml = this.innerHTML;
+                    
+                    // Перевіряємо що trainId коректний
+                    if (!trainId || trainId <= 0) {
+                        showAlert('danger', 'Некоректний ID потяга');
+                        return;
+                    }
+                    
+                    // Показуємо індикатор завантаження
+                    this.disabled = true;
+                    this.innerHTML = '<i class="bi bi-hourglass-split"></i> Обробка...';
+                    
+                    // Створюємо FormData для відправки
+                    const formData = new FormData();
+                    formData.append('trainId', trainId);
+                    
+                    // Отримуємо CSRF token
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+                    if (token) {
+                        formData.append('__RequestVerificationToken', token);
+                    }
+                    
+                    // Відправляємо AJAX запит
+                    fetch('/Admin/ToggleTrainStatus', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Response:', data); // Для діагностики
+                        
+                        if (data.success) {
+                            // Оновлюємо бейдж статусу
+                            const statusBadge = document.getElementById(`status-badge-${trainId}`);
+                            statusBadge.textContent = data.statusText;
+                            statusBadge.className = `badge ${data.newStatus ? 'bg-success' : 'bg-secondary'}`;
+                            
+                            // Оновлюємо кнопку
+                            this.className = `btn btn-sm ${data.buttonClass} toggle-status-btn`;
+                            this.innerHTML = `<i class="bi ${data.newStatus ? 'bi-pause-circle' : 'bi-play-circle'}"></i> ${data.buttonText}`;
+                            this.title = data.newStatus ? 'Деактивувати потяг' : 'Активувати потяг';
+                            
+                            // Показуємо повідомлення про успіх
+                            showAlert('success', data.message);
+                        } else {
+                            // Показуємо повідомлення про помилку
+                            showAlert('danger', data.message || 'Невідома помилка');
+                            this.innerHTML = originalHtml;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showAlert('danger', 'Помилка при зміні статусу потяга: ' + error.message);
+                        this.innerHTML = originalHtml;
+                    })
+                    .finally(() => {
+                        this.disabled = false;
+                    });
+                });
+            });
+            
+            // Функція для показу сповіщень
+            function showAlert(type, message) {
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+                alertDiv.innerHTML = `
+                    <i class="bi bi-${type === 'success' ? 'check-circle-fill' : type === 'info' ? 'info-circle-fill' : 'exclamation-triangle-fill'}"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                `;
+                
+                // Вставляємо сповіщення після заголовка
+                const container = document.querySelector('.container');
+                const insertAfter = container.querySelector('h1').parentElement.nextElementSibling;
+                container.insertBefore(alertDiv, insertAfter);
+                
+                // Автоматично приховуємо через 5 секунд
+                setTimeout(() => {
+                    if (alertDiv.parentNode) {
+                        alertDiv.remove();
+                    }
+                }, 5000);
+            }
+        });
+    </script>
+}

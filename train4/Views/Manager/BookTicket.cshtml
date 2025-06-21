@@ -1,0 +1,148 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+@{
+    ViewData["Title"] = "Бронювання квитків";
+    var stations = ViewBag.Stations as List<train2.Models.Stations>;
+}
+
+<div class="container">
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="text-primary">
+                    <i class="bi bi-ticket-perforated"></i> Бронювання квитків для клієнтів
+                </h2>
+                <a asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Назад до панелі
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-search"></i> Пошук доступних рейсів
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="BookTicket" method="post" class="needs-validation" novalidate>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="fromStation" class="form-label">
+                                    <i class="bi bi-geo-alt"></i> Звідки
+                                </label>
+                                <select name="fromStation" id="fromStation" class="form-select" required>
+                                    <option value="" disabled selected>Оберіть станцію відправлення</option>
+                                    @foreach (var station in stations)
+                                    {
+                                        <option value="@station.station_name">@station.station_name</option>
+                                    }
+                                </select>
+                                <div class="invalid-feedback">
+                                    Будь ласка, оберіть станцію відправлення.
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="toStation" class="form-label">
+                                    <i class="bi bi-geo-alt-fill"></i> Куди
+                                </label>
+                                <select name="toStation" id="toStation" class="form-select" required>
+                                    <option value="" disabled selected>Оберіть станцію призначення</option>
+                                    @foreach (var station in stations)
+                                    {
+                                        <option value="@station.station_name">@station.station_name</option>
+                                    }
+                                </select>
+                                <div class="invalid-feedback">
+                                    Будь ласка, оберіть станцію призначення.
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="date" class="form-label">
+                                    <i class="bi bi-calendar"></i> Дата поїздки
+                                </label>
+                                <input type="date" name="date" id="date" class="form-control" 
+                                       min="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                                <div class="invalid-feedback">
+                                    Будь ласка, оберіть дату поїздки.
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="bi bi-search"></i> Знайти рейси
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Информационная секция -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="alert alert-info" role="alert">
+                <h6 class="alert-heading">
+                    <i class="bi bi-info-circle"></i> Інструкції для бронювання
+                </h6>
+                <p class="mb-0">
+                    1. Оберіть станції відправлення та призначення<br>
+                    2. Вкажіть дату поїздки<br>
+                    3. Натисніть "Знайти рейси" для перегляду доступних поїздів<br>
+                    4. Оберіть поїзд та місце для бронювання
+                </p>
+            </div>
+        </div>
+    </div>
+
+  @*   <!-- Популярные маршруты -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-star"></i> Популярні маршрути
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <button type="button" class="btn btn-outline-primary btn-sm w-100 mb-2" onclick="setRoute('Киев', 'Львов')">
+                                Київ → Львів
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="button" class="btn btn-outline-primary btn-sm w-100 mb-2" onclick="setRoute('Киев', 'Харьков')">
+                                Київ → Харків
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="button" class="btn btn-outline-primary btn-sm w-100 mb-2" onclick="setRoute('Киев', 'Одесса')">
+                                Київ → Одеса
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> *@
+</div>
+
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/maneger/BookTicket.css" />
+}
+
+@section Scripts {
+    <script src="~/js/pages/maneger/BookTicket.js"></script>
+}

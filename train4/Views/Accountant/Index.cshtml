@@ -1,0 +1,210 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+@{
+    ViewData["Title"] = "Панель бухгалтера";
+}
+
+<style>
+    .stat-card {
+        display: flex;
+        align-items: center; /* вертикальне вирівнювання */
+        justify-content: center; /* горизонтальне вирівнювання */
+        padding: 20px;
+        border-radius: 10px;
+        height: 100px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        gap: 12px;
+    }
+
+    .stat-icon i {
+        font-size: 2rem;
+    }
+
+    .stat-content {
+        display: flex;
+        flex-direction: column;
+        align-items: start;
+        justify-content: center;
+    }
+
+        .stat-content h4 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .stat-content small {
+            margin: 0;
+            font-size: 0.85rem;
+        }
+</style>
+
+<div class="container-fluid">
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-5">
+                <div class="text-center flex-grow-1">
+                    <h2 class="text-primary mb-3">
+                        <i class="bi bi-calculator"></i> Панель бухгалтера
+                    </h2>
+                    <p class="text-muted">Контроль фінансів та підтвердження оплат</p>
+                </div>
+                <div>
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-house"></i> На головну
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <!-- Подтверждение оплат -->
+        <div class="col-lg-5 col-md-6 mb-4">
+            <div class="card h-100 shadow-lg border-0 hover-card">
+                <div class="card-header bg-success text-white text-center">
+                    <h4 class="mb-0">
+                        <i class="bi bi-credit-card-2-front"></i> Підтвердження оплат
+                    </h4>
+                </div>
+                <div class="card-body text-center d-flex flex-column">
+                    <div class="mb-4">
+                        <i class="bi bi-cash-coin text-success" style="font-size: 4rem;"></i>
+                    </div>
+                    <h5 class="card-title">Керування оплатами квитків</h5>
+                    <p class="card-text flex-grow-1">
+                        Перегляд заброньованих квитків та підтвердження їх оплати. 
+                        Контроль касових операцій та ведення обліку платежів.
+                    </p>
+                    <div class="mt-auto">
+                        <div class="row text-center mb-3">
+                            <div class="col-6">
+                                <div class="stat-item">
+                                    <span class="h4 text-warning" id="unpaidCount">-</span>
+                                    <br><small class="text-muted">Неоплачені</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-item">
+                                    <span class="h4 text-danger" id="unpaidAmount">-</span>
+                                    <br><small class="text-muted">На суму (грн)</small>
+                                </div>
+                            </div>
+                        </div>
+                        <a asp-action="PaymentConfirmation" class="btn btn-success btn-lg w-100">
+                            <i class="bi bi-check-circle"></i> Підтвердити оплати
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Финансовые отчеты -->
+        <div class="col-lg-5 col-md-6 mb-4">
+            <div class="card h-100 shadow-lg border-0 hover-card">
+                <div class="card-header bg-info text-white text-center">
+                    <h4 class="mb-0">
+                        <i class="bi bi-graph-up"></i> Фінансові звіти
+                    </h4>
+                </div>
+                <div class="card-body text-center d-flex flex-column">
+                    <div class="mb-4">
+                        <i class="bi bi-bar-chart text-info" style="font-size: 4rem;"></i>
+                    </div>
+                    <h5 class="card-title">Статистика та аналітика</h5>
+                    <p class="card-text flex-grow-1">
+                        Генерація фінансових звітів, аналіз продажів квитків, 
+                        статистика доходів та експорт даних.
+                    </p>
+                    <div class="mt-auto">
+                        <div class="row text-center mb-3">
+                            <div class="col-6">
+                                <div class="stat-item">
+                                    <span class="h4 text-success" id="monthRevenue">-</span>
+                                    <br><small class="text-muted">Дохід місяць</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-item">
+                                    <span class="h4 text-primary" id="monthTickets">-</span>
+                                    <br><small class="text-muted">Квитків продано</small>
+                                </div>
+                            </div>
+                        </div>
+                        <a asp-action="FinancialReports" class="btn btn-info btn-lg w-100">
+                            <i class="bi bi-file-earmark-bar-graph"></i> Переглянути звіти
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Быстрая статистика -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow border-0">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-speedometer2"></i> Швидка статистика
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <div class="stat-card bg-primary text-white">
+                                <div class="stat-icon">
+                                    <i class="bi bi-ticket-perforated"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h4 id="todayTickets">-</h4>
+                                    <small>Квитків сьогодні</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <div class="stat-card bg-success text-white">
+                                <div class="stat-icon">
+                                    <i class="bi bi-currency-dollar"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h4 id="todayRevenue">-</h4>
+                                    <small>Дохід сьогодні</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <div class="stat-card bg-warning text-white">
+                                <div class="stat-icon">
+                                    <i class="bi bi-hourglass-split"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h4 id="pendingPayments">-</h4>
+                                    <small>Очікують оплати</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <div class="stat-card bg-info text-white">
+                                <div class="stat-icon">
+                                    <i class="bi bi-percent"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h4 id="paymentRate">-</h4>
+                                    <small>Відсоток оплат</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pages/accountant/Index.js"></script>
+}

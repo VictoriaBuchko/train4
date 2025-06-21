@@ -1,0 +1,40 @@
+﻿.seat {
+    width: 40px;
+    height: 40px;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 2px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.available {
+    background: #d4edda;
+    border-color: #28a745;
+}
+
+.reserved {
+    background: #fff3cd;
+    border-color: #ffc107;
+    cursor: not-allowed;
+}
+
+.occupied {
+    background: #f8d7da;
+    border-color: #dc3545;
+    cursor: not-allowed;
+}
+
+.selected {
+    background: #cce7ff;
+    border-color: #007bff;
+    transform: scale(1.1);
+}
+
+.seat:hover.available {
+    background: #c3e6cb;
+}

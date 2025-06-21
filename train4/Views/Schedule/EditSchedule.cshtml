@@ -1,0 +1,243 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    ViewData["Title"] = "Редагування розкладу";
+    var schedule = Model as Dictionary<string, object>;
+    var trains = ViewBag.Trains as List<Dictionary<string, object>>;
+    var canEditTuple = (ValueTuple<bool, string>?)ViewBag.CanEdit;
+    var canEditFlag = canEditTuple?.Item1 ?? false;
+    var reason = canEditTuple?.Item2 ?? "Недоступно для редагування.";
+
+    string GetFullDayName(string shortDay) => shortDay switch
+    {
+        "Пн" => "Понеділок",
+        "Вт" => "Вівторок",
+        "Ср" => "Середа",
+        "Чт" => "Четвер",
+        "Пт" => "П'ятниця",
+        "Сб" => "Субота",
+        "Нд" => "Неділя",
+        _ => shortDay
+    };
+}
+<link rel="stylesheet" href="~/css/schedule-styles.css" />
+<div class="container mt-4">
+    <h1>Редагування розкладу №@schedule["schedule_id"]</h1>
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="Index">Список розкладів</a></li>
+            <li class="breadcrumb-item"><a asp-action="ScheduleDetails" asp-route-id="@schedule["schedule_id"]">Деталі розкладу</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Редагування</li>
+        </ol>
+    </nav>
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger">
+            <ul>
+                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    <li>@error.ErrorMessage</li>
+                }
+            </ul>
+        </div>
+    }
+
+    @if (!canEditFlag)
+    {
+        <div class="alert alert-warning">
+            <h6><i class="bi bi-exclamation-triangle"></i> Увага!</h6>
+            <p>@reason</p>
+            <p>Ви можете переглянути інформацію, але редагування заборонено.</p>
+        </div>
+    }
+
+    <form method="post" id="editScheduleForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="id" value="@schedule["schedule_id"]" />
+
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">Основна інформація</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="trainId" class="form-label">Потяг</label>
+                        <select class="form-control" id="trainId" name="trainId" required>
+                            <option value="">Виберіть потяг</option>
+                            @if (trains != null)
+                            {
+                                foreach (var train in trains)
+                                {
+                                    var trainId = train["train_id"].ToString();
+                                    var isSelected = trainId == schedule["train_id"].ToString() ? " selected" : "";
+                                    var trainNumber = train["train_number"];
+                                    var carriageCount = train["carriage_count"];
+
+                                    @Html.Raw($"<option value=\"{trainId}\"{isSelected}>Потяг №{trainNumber} ({carriageCount} вагонів)</option>")
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="scheduleDate" class="form-label">Дата початку дії розкладу</label>
+                        <input type="date" class="form-control" id="scheduleDate" name="scheduleDate" 
+                               value="@((DateTime)schedule["date"]).ToString("yyyy-MM-dd")" required>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="departureTime" class="form-label">Час відправлення</label>
+                        <input type="time" class="form-control" id="departureTime" name="departureTime" 
+                               value="@((TimeSpan)schedule["departure_time"]).ToString("hh\:mm")" required>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">Дні тижня</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">Виберіть дні тижня, коли потяг буде курсувати:</p>
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="btn-group-toggle d-flex flex-wrap gap-2" data-toggle="buttons">
+                            @{
+                                var selectedDays = schedule["weekdays"].ToString().Split(',').Select(d => d.Trim()).ToList();
+                            }
+
+                            @foreach (var day in new[] {"Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"})
+                            {
+                                var id = day switch
+                                {
+                                    "Пн" => "monday",
+                                    "Вт" => "tuesday",
+                                    "Ср" => "wednesday",
+                                    "Чт" => "thursday",
+                                    "Пт" => "friday",
+                                    "Сб" => "saturday",
+                                    "Нд" => "sunday",
+                                    _ => "day"
+                                };
+                                var isChecked = selectedDays.Contains(day);
+
+                                <input type="checkbox" class="btn-check" id="@id" name="selectedDays" value="@day"
+                                       @(isChecked ? "checked" : "") autocomplete="off">
+                                <label class="btn btn-outline-primary @(isChecked ? "active" : "")" for="@id">
+                                    <i class="bi bi-calendar-day"></i> @GetFullDayName(day)
+                                </label>
+                            }
+                        </div>
+
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="selectAllDays">
+                                Вибрати всі дні
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="selectWeekdays">
+                                Тільки робочі дні
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="selectWeekends">
+                                Тільки вихідні
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="clearAllDays">
+                                Очистити вибір
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between mb-5">
+            <a asp-action="ScheduleDetails" asp-route-id="@schedule["schedule_id"]" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Повернутися до деталей
+            </a>
+            <div>
+                <a asp-action="Index" class="btn btn-outline-secondary me-2">Скасувати</a>
+                @if (canEditFlag)
+                {
+                    <button type="submit" class="btn btn-success" id="submitBtn">
+                        <i class="bi bi-check-lg"></i> Зберегти зміни
+                    </button>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-secondary" disabled>
+                        <i class="bi bi-lock"></i> Редагування заборонено
+                    </button>
+                }
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const canEdit = @Html.Raw(Json.Serialize(canEditFlag));
+
+            if (!canEdit) {
+                const form = document.getElementById('editScheduleForm');
+                const inputs = form.querySelectorAll('input, select, button[type="button"]');
+                inputs.forEach(input => input.disabled = true);
+                return;
+            }
+
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('scheduleDate').min = today;
+
+            setupWeekdayHandlers();
+            validateForm();
+
+            document.getElementById('editScheduleForm').addEventListener('change', validateForm);
+            document.getElementById('editScheduleForm').addEventListener('input', validateForm);
+        });
+
+        function setupWeekdayHandlers() {
+            const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+            document.getElementById('selectAllDays').addEventListener('click', () => {
+                days.forEach(id => setChecked(id, true));
+                validateForm();
+            });
+            document.getElementById('selectWeekdays').addEventListener('click', () => {
+                days.forEach(id => setChecked(id, ['monday','tuesday','wednesday','thursday','friday'].includes(id)));
+                validateForm();
+            });
+            document.getElementById('selectWeekends').addEventListener('click', () => {
+                days.forEach(id => setChecked(id, ['saturday','sunday'].includes(id)));
+                validateForm();
+            });
+            document.getElementById('clearAllDays').addEventListener('click', () => {
+                days.forEach(id => setChecked(id, false));
+                validateForm();
+            });
+        }
+
+        function setChecked(id, checked) {
+            const cb = document.getElementById(id);
+            if (!cb) return;
+            cb.checked = checked;
+            cb.labels[0].classList.toggle('active', checked);
+        }
+
+        function validateForm() {
+            const trainId = document.getElementById('trainId').value;
+            const scheduleDate = document.getElementById('scheduleDate').value;
+            const departureTime = document.getElementById('departureTime').value;
+            const selectedDays = document.querySelectorAll('input[name="selectedDays"]:checked');
+            const submitBtn = document.getElementById('submitBtn');
+
+            if (submitBtn) {
+                const isValid = trainId && scheduleDate && departureTime && selectedDays.length > 0;
+                submitBtn.disabled = !isValid;
+            }
+        }
+    </script>
+}

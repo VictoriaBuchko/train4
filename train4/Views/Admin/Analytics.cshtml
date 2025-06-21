@@ -1,0 +1,115 @@
+﻿@{
+    ViewData["Title"] = "Аналітика";
+    var topFilled = ViewBag.TopFilled as List<Dictionary<string, object>>;
+    var topIncome = ViewBag.TopIncome as List<Dictionary<string, object>>;
+    var popularRoutes = ViewBag.PopularRoutes as List<Dictionary<string, object>>;
+}
+
+<div class="container mt-5">
+    <div class="text-end mb-3">
+        <a asp-action="AdminMenu" asp-controller="Admin" class="btn btn-secondary">
+            <i class="bi bi-arrow-left-circle"></i> Повернутись у меню адміністратора
+        </a>
+    </div>
+
+    <div class="card shadow p-4">
+        <h2 class="mb-4 text-center text-primary">Аналітика системи продажу квитків</h2>
+        <p class="text-muted text-center">Оберіть часовий проміжок, щоб переглянути статистику по продажам, маршрутам і доходу</p>
+
+        <form method="post" class="row g-3 mb-4">
+            <div class="col-md-4">
+                <label class="form-label">Дата з:</label>
+                <input type="date" name="startDate" class="form-control" value="@ViewBag.Start?.ToString("yyyy-MM-dd")" required />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Дата до:</label>
+                <input type="date" name="endDate" class="form-control" value="@ViewBag.End?.ToString("yyyy-MM-dd")" required />
+            </div>
+            <div class="col-md-4 align-self-end">
+                <button type="submit" class="btn btn-outline-primary w-100">
+                    <i class="bi bi-bar-chart"></i> Показати статистику
+                </button>
+            </div>
+        </form>
+
+        @if (topFilled != null && topFilled.Any())
+        {
+            <div class="mt-4">
+                <h4 class="text-primary">📈 Найзаповненіші рейси</h4>
+                <table class="table table-striped table-hover table-bordered">
+                    <thead class="table-light">
+                        <tr><th>Рейс</th><th>Потяг</th><th>Квитків</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in topFilled)
+                        {
+                            <tr>
+                                <td>@r["schedule_id"]</td>
+                                <td>@r["train_number"]</td>
+                                <td>@r["booked_tickets_count"]</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else if (ViewBag.Start != null)
+        {
+            <div class="alert alert-info">Немає даних про заповненість потягів у цьому періоді.</div>
+        }
+
+        @if (topIncome != null && topIncome.Any())
+        {
+            <div class="mt-5">
+                <h4 class="text-success">💰 Найдоходніші рейси</h4>
+                <table class="table table-striped table-hover table-bordered">
+                    <thead class="table-light">
+                        <tr><th>Рейс</th><th>Потяг</th><th>Продано</th><th>Дохід (₴)</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in topIncome)
+                        {
+                            <tr>
+                                <td>@r["schedule_id"]</td>
+                                <td>@r["train_number"]</td>
+                                <td>@r["tickets_sold"]</td>
+                                <td>@string.Format("{0:0.00}", r["total_income"])</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else if (ViewBag.Start != null)
+        {
+            <div class="alert alert-info">Немає доходів за вказаний період.</div>
+        }
+
+        @if (popularRoutes != null && popularRoutes.Any())
+        {
+            <div class="mt-5">
+                <h4 class="text-info">🚆 Найпопулярніші маршрути</h4>
+                <table class="table table-striped table-hover table-bordered">
+                    <thead class="table-light">
+                        <tr><th>Потяг</th><th>Звідки</th><th>Куди</th><th>Квитків</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in popularRoutes)
+                        {
+                            <tr>
+                                <td>@r["train_number"]</td>
+                                <td>@r["from_station"]</td>
+                                <td>@r["to_station"]</td>
+                                <td>@r["tickets_sold"]</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else if (ViewBag.Start != null)
+        {
+            <div class="alert alert-info">Немає популярних маршрутів у зазначений період.</div>
+        }
+    </div>
+</div>

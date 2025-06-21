@@ -1,0 +1,35 @@
+﻿.manager-card {
+    transition: transform 0.2s ease-in-out;
+    border: none;
+    border-radius: 10px;
+}
+
+    .manager-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+    }
+
+.card-icon {
+    font-size: 3rem;
+    color: var(--bs-primary);
+}
+
+.manager-card .btn {
+    border-radius: 20px;
+    padding: 8px 20px;
+    font-weight: 500;
+}
+
+.quick-actions .btn {
+    border-radius: 8px;
+    padding: 10px 15px;
+}
+
+.card-header {
+    border-bottom: 2px solid var(--bs-primary);
+}
+
+.alert {
+    border-radius: 10px;
+    border: none;
+}

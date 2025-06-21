@@ -1,0 +1,12 @@
+﻿.is-valid {
+    border-color: #198754;
+}
+
+.is-invalid {
+    border-color: #dc3545;
+}
+
+.form-text {
+    font-size: 0.875em;
+    color: #6c757d;
+}

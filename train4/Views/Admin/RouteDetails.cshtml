@@ -1,0 +1,47 @@
+﻿@model List<train2.Models.StationSequence>
+
+@{
+    ViewData["Title"] = "Маршрут поїзда";
+    var trainNumber = ViewBag.TrainNumber;
+}
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary">
+            <i class="bi bi-map"></i> Маршрут поїзда №@trainNumber
+        </h2>
+        <a asp-action="RouteIndex" class="btn btn-outline-dark">
+            <i class="bi bi-arrow-left-circle"></i> Назад до списку
+        </a>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+            <table class="table table-hover table-bordered">
+                <thead class="table-light">
+                    <tr class="text-center">
+                        <th>#</th>
+                        <th>Станція</th>
+                        <th>Тривалість</th>
+                        <th>Відстань (км)</th>
+                        <th>Ціна (₴)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < Model.Count; i++)
+                    {
+                        var s = Model[i];
+                        var price = (s.distance_km * 0.5) + (s.travel_duration.TotalMinutes * 0.3);
+                        <tr>
+                            <td class="text-center">@(i + 1)</td>
+                            <td>@s.Stations.station_name</td>
+                            <td>@s.travel_duration</td>
+                            <td class="text-center">@s.distance_km</td>
+                            <td class="text-center">@price.ToString("0.00")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

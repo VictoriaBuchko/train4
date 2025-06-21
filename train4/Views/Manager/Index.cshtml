@@ -1,0 +1,141 @@
+﻿@{
+    ViewData["Title"] = "Панель менеджера";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="text-primary">
+                    <i class="bi bi-person-badge"></i> Панель менеджера
+                </h2>
+                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="bi bi-house"></i> На головну
+                </a>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row g-4">
+        <!-- Создание нового клиента -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm manager-card">
+                <div class="card-body text-center">
+                    <div class="card-icon mb-3">
+                        <i class="bi bi-person-plus-fill"></i>
+                    </div>
+                    <h5 class="card-title">Створити клієнта</h5>
+                    <p class="card-text text-muted">
+                        Додавання нового клієнта в систему
+                    </p>
+                    <a asp-action="CreateClient" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Створити
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Бронирование билетов -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm manager-card">
+                <div class="card-body text-center">
+                    <div class="card-icon mb-3">
+                        <i class="bi bi-ticket-perforated-fill"></i>
+                    </div>
+                    <h5 class="card-title">Забронювати квиток</h5>
+                    <p class="card-text text-muted">
+                        Бронювання квитків для клієнтів
+                    </p>
+                    <a asp-action="BookTicket" class="btn btn-success">
+                        <i class="bi bi-calendar-check"></i> Забронювати
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Управление билетами -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm manager-card">
+                <div class="card-body text-center">
+                    <div class="card-icon mb-3">
+                        <i class="bi bi-list-check"></i>
+                    </div>
+                    <h5 class="card-title">Управління квитками</h5>
+                    <p class="card-text text-muted">
+                        Перегляд та скасування квитків
+                    </p>
+                    <a asp-action="ManageTickets" class="btn btn-warning">
+                        <i class="bi bi-gear"></i> Управляти
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Быстрые действия -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightning"></i> Швидкі дії
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="d-grid">
+                                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#quickSearchModal">
+                                    <i class="bi bi-search"></i> Швидкий пошук клієнта
+                                </button>
+                            </div>
+                        </div>                       
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно быстрого поиска -->
+<div class="modal fade" id="quickSearchModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Швидкий пошук клієнта</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="clientSearch" class="form-label">Введіть ім'я, прізвище або логін:</label>
+                    <input type="text" class="form-control" id="clientSearch" placeholder="Введіть запит...">
+                </div>
+                <div id="searchResults" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/maneger/Index.css" />
+}
+
+@section Scripts {
+    <script src="~/js/pages/maneger/Index.js"></script>
+}

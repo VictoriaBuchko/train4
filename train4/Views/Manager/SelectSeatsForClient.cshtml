@@ -1,0 +1,302 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+@model List<train2.Models.Schedule>
+@{
+    ViewData["Title"] = "Результати пошуку для бронювання";
+}
+
+<div class="header-container">
+    <div class="logo">
+        <a href="/">
+            <i class="bi bi-train-front"></i> ЗалізничніКвитки (Панель менеджера)
+        </a>
+    </div>
+    
+    <div class="top-nav">
+        <div class="user-menu">
+            <a asp-action="Index" class="nav-button">Панель менеджера</a>
+            <a asp-controller="Account" asp-action="Logout" class="nav-button">Вийти</a>
+        </div>
+    </div>
+</div>
+
+<div class="search-container">
+    <div class="search-header">
+        <h2>Результати пошуку потягів для бронювання</h2>
+        <a asp-action="BookTicket" class="back-button">
+            <i class="bi bi-arrow-left"></i> Повернутися до пошуку
+        </a>
+    </div>
+
+    <div class="route-info">
+        <div class="route-details">
+            <span class="from">@ViewBag.From</span>
+            <i class="bi bi-arrow-right"></i>
+            <span class="to">@ViewBag.To</span>
+            <span class="date">@Convert.ToDateTime(ViewBag.Date).ToString("dd.MM.yyyy")</span>
+        </div>
+        <div class="manager-badge">
+            <i class="bi bi-person-badge"></i> Режим менеджера
+        </div>
+    </div>
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="no-results">
+            <i class="bi bi-exclamation-triangle"></i>
+            <p>Не знайдено потягів за вказаним маршрутом і датою. Спробуйте змінити параметри пошуку.</p>
+            <a asp-action="BookTicket" class="search-button">
+                Новий пошук
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="results-list">
+            <table class="trains-table">
+                <thead>
+                    <tr>
+                        <th>№ потяга</th>
+                        <th>Дата</th>
+                        <th>Відправлення</th>
+                        <th>Дні курсування</th>
+                        <th>Дії</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var schedule in Model)
+                    {
+                        <tr>
+                            <td class="train-number">@schedule.Train.train_number</td>
+                            <td>@schedule.date.ToString("dd.MM.yyyy")</td>
+                            <td>@schedule.departure_time.ToString(@"hh\:mm")</td>
+                            <td>@schedule.weekdays</td>
+                            <td>
+                                <a asp-action="SeatsForClient"
+                                   asp-route-trainId="@schedule.train_id"
+                                   asp-route-travelDate="@schedule.date.ToString("yyyy-MM-dd")"
+                                   asp-route-fromStationId="@ViewBag.FromStationId"
+                                   asp-route-toStationId="@ViewBag.ToStationId"
+                                   class="btn btn-primary manager-book-btn">
+                                   <i class="bi bi-ticket-perforated"></i> Вибрати місця
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<style>
+    /* Основні стилі */
+    body {
+        font-family: 'Segoe UI', sans-serif;
+        background-color: #f8f9fa;
+    }
+
+    /* Стилі для хедера */
+    .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 40px;
+        background-color: white;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+
+    .logo a {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #1a3dc1;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .top-nav {
+        display: flex;
+        align-items: center;
+    }
+
+    .user-menu {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .nav-button {
+        background-color: #1a3dc1;
+        color: white;
+        padding: 8px 16px;
+        text-decoration: none;
+        border-radius: 5px;
+        font-weight: 500;
+    }
+
+    .nav-button:hover {
+        background-color: #0f2fa1;
+        color: white;
+    }
+
+    /* Стилі для контейнера пошуку */
+    .search-container {
+        max-width: 1000px;
+        margin: 0 auto 40px;
+        padding: 0 20px;
+    }
+
+    .search-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .search-header h2 {
+        margin: 0;
+        color: #333;
+    }
+
+    .back-button {
+        color: #1a3dc1;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .back-button:hover {
+        text-decoration: underline;
+    }
+
+    .route-info {
+        background-color: white;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .route-details {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .from, .to {
+        font-weight: bold;
+        color: #1a3dc1;
+    }
+
+    .date {
+        color: #666;
+    }
+
+    .manager-badge {
+        background-color: #28a745;
+        color: white;
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    /* Стилі для відсутності результатів */
+    .no-results {
+        background-color: white;
+        border-radius: 8px;
+        padding: 30px;
+        text-align: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+    .no-results i {
+        font-size: 3rem;
+        color: #dc3545;
+        margin-bottom: 15px;
+    }
+
+    .no-results p {
+        color: #666;
+        margin-bottom: 20px;
+    }
+
+    .search-button {
+        background-color: #1a3dc1;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 5px;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .search-button:hover {
+        background-color: #0f2fa1;
+        color: white;
+    }
+
+    /* Стилі для списку результатів */
+    .results-list {
+        background-color: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+    .trains-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .trains-table th, .trains-table td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+
+    .trains-table th {
+        background-color: #f8f9fa;
+        color: #333;
+        font-weight: 600;
+    }
+
+    .trains-table tr:hover {
+        background-color: #f5f8ff;
+    }
+
+    .train-number {
+        font-weight: bold;
+        color: #1a3dc1;
+    }
+
+    .manager-book-btn {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .manager-book-btn:hover {
+        background-color: #218838;
+        color: white;
+        text-decoration: none;
+    }
+</style>

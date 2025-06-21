@@ -1,0 +1,751 @@
+﻿@* @model train2.Models.Client
+@{
+    ViewData["Title"] = "Особистий кабінет";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/account/profile.css" />
+}
+
+<div class="profile-container">
+    <!-- Секція профілю з аватаром та основною інформацією -->
+    <div class="profile-header">
+        <div class="user-avatar">
+            <div class="avatar-image">
+                <i class="bi bi-person-circle"></i>
+            </div>
+            <div class="avatar-info">
+                <h3>@Model.client_surname @Model.client_name</h3>
+                <p class="phone-number">@(Model.phone_number ?? "Номер телефону не вказано")</p>
+                <p class="email">@(Model.email ?? "Електронна пошта не вказана")</p>
+                <button type="button" class="btn btn-outline-primary edit-profile-btn" data-bs-toggle="modal" data-bs-target="#profileEditModal">
+                    <i class="bi bi-pencil"></i> Змінити дані
+                </button>
+            </div>
+        </div>
+
+        <div class="profile-actions">
+            <a asp-controller="Account" asp-action="Logout" class="btn btn-outline-danger">
+                <i class="bi bi-box-arrow-right"></i> Вийти
+            </a>
+        </div>
+    </div>
+
+    <!-- Навігація по вкладках (убираем платежную информацию) -->
+    <div class="profile-tabs">
+        <ul class="nav nav-tabs" id="profileTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="tickets-tab" data-bs-toggle="tab" data-bs-target="#tickets" type="button"
+                        role="tab" aria-controls="tickets" aria-selected="true">
+                    <i class="bi bi-ticket-perforated"></i> Мої квитки
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button"
+                        role="tab" aria-controls="history" aria-selected="false">
+                    <i class="bi bi-clock-history"></i> Історія подорожей
+                </button>
+            </li>
+        </ul>
+
+        <!-- Вміст вкладок -->
+        <div class="tab-content" id="profileTabsContent">
+
+            <!-- Вкладка "Мої квитки" -->
+            <div class="tab-pane fade show active" id="tickets" role="tabpanel" aria-labelledby="tickets-tab">
+                <div class="tab-header">
+                    <h4>Активні квитки</h4>
+                </div>
+
+                @if (ViewBag.ActiveTickets == null || ((List<train2.Models.Ticket>)ViewBag.ActiveTickets).Count == 0)
+                {
+                    <div class="empty-state">
+                        <div class="empty-icon">🎫</div>
+                        <h5>Поки немає квитків</h5>
+                        <p>Подорожі чекають на вас!</p>
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-primary">
+                            <i class="bi bi-search"></i> Шукати квитки
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    <div class="tickets-list">
+                        @foreach (var ticket in (List<train2.Models.Ticket>)ViewBag.ActiveTickets)
+                        {
+                            <div class="ticket-card modern">
+                                <div class="ticket-header">
+                                    <div class="train-info">
+                                        <span class="train-number">Потяг №@ticket.Schedule.Train.train_number</span>
+                                        <span class="ticket-id">#@ticket.ticket_id</span>
+                                    </div>
+                                    <span class="ticket-status @(ticket.Transactions != null && ticket.Transactions.Any() ? "paid" : "booked")">
+                                        @(ticket.Transactions != null && ticket.Transactions.Any() ? "Оплачений" : "Заброньований")
+                                    </span>
+                                </div>
+
+                                <div class="ticket-body">
+                                    <div class="route-section">
+                                        <div class="route-header">
+                                            <h6><i class="bi bi-geo-alt"></i> Маршрут</h6>
+                                        </div>
+                                        <div class="route-details">
+                                            <div class="station-info">
+                                                <div class="station from">
+                                                    <span class="station-name">@(ticket.FromStation?.station_name ?? "Невідомо")</span>
+                                                    <span class="time">@ticket.Schedule.departure_time.ToString(@"hh\:mm")</span>
+                                                </div>
+                                                <div class="route-line">
+                                                    <div class="line"></div>
+                                                    <i class="bi bi-arrow-right"></i>
+                                                </div>
+                                                <div class="station to">
+                                                    <span class="station-name">@(ticket.ToStation?.station_name ?? "Невідомо")</span>
+                                                    <span class="time">—</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="travel-details">
+                                        <div class="detail-item">
+                                            <i class="bi bi-calendar-event"></i>
+                                            <span>@ticket.Schedule.date.ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("uk-UA"))</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <i class="bi bi-train-lightrail"></i>
+                                            <span>Вагон @ticket.Seat.TrainCarriageTypes.carriage_number (@ticket.Seat.TrainCarriageTypes.CarriageTypes.carriage_type)</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <i class="bi bi-person-square"></i>
+                                            <span>Місце @ticket.Seat.seat_number</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <i class="bi bi-currency-exchange"></i>
+                                            <span>@ticket.total_price.ToString("F2") грн</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="booking-info">
+                                        <span class="booking-date">Заброньовано: @ticket.booking_date.ToString("dd.MM.yyyy")</span>
+                                    </div>
+                                </div>
+
+                                @if (ticket.Transactions == null || !ticket.Transactions.Any())
+                                {
+                                    <div class="ticket-actions">
+                                        <button class="btn btn-success btn-sm pay-ticket-btn" data-ticket-id="@ticket.ticket_id">
+                                            <i class="bi bi-credit-card"></i> Оплатити
+                                        </button>
+                                        <button class="btn btn-outline-danger btn-sm cancel-ticket-btn" data-ticket-id="@ticket.ticket_id">
+                                            <i class="bi bi-x-circle"></i> Скасувати
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- Вкладка "Історія подорожей" -->
+            <div class="tab-pane fade" id="history" role="tabpanel" aria-labelledby="history-tab">
+                <div class="tab-header">
+                    <h4>Історія подорожей</h4>
+                </div>
+
+                @if (ViewBag.HistoricalTickets == null || ((List<train2.Models.Ticket>)ViewBag.HistoricalTickets).Count == 0)
+                {
+                    <div class="empty-state">
+                        <div class="empty-icon">📚</div>
+                        <h5>Історія подорожей порожня</h5>
+                        <p>Ваші завершені подорожі з'являться тут</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="tickets-list">
+                        @foreach (var ticket in (List<train2.Models.Ticket>)ViewBag.HistoricalTickets)
+                        {
+                            <div class="ticket-card historical">
+                                <div class="ticket-header">
+                                    <div class="train-info">
+                                        <span class="train-number">Потяг №@ticket.Schedule.Train.train_number</span>
+                                        <span class="ticket-id">#@ticket.ticket_id</span>
+                                    </div>
+                                    <span class="ticket-status @(ticket.Transactions != null && ticket.Transactions.Any() ? "paid" : "not-paid")">
+                                        @(ticket.Transactions != null && ticket.Transactions.Any() ? "Був оплачений" : "Не був оплачений")
+                                    </span>
+                                </div>
+
+                                <div class="ticket-body">
+                                    <div class="route-section">
+                                        <div class="route-header">
+                                            <h6><i class="bi bi-geo-alt"></i> Маршрут</h6>
+                                        </div>
+                                        <div class="route-details">
+                                            <div class="station-info">
+                                                <div class="station from">
+                                                    <span class="station-name">@(ticket.FromStation?.station_name ?? "Невідомо")</span>
+                                                    <span class="time">@ticket.Schedule.departure_time.ToString(@"hh\:mm")</span>
+                                                </div>
+                                                <div class="route-line">
+                                                    <div class="line"></div>
+                                                    <i class="bi bi-arrow-right"></i>
+                                                </div>
+                                                <div class="station to">
+                                                    <span class="station-name">@(ticket.ToStation?.station_name ?? "Невідомо")</span>
+                                                    <span class="time">—</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="travel-details">
+                                        <div class="detail-item">
+                                            <i class="bi bi-calendar-event"></i>
+                                            <span>@ticket.Schedule.date.ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("uk-UA"))</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <i class="bi bi-train-lightrail"></i>
+                                            <span>Вагон @ticket.Seat.TrainCarriageTypes.carriage_number (@ticket.Seat.TrainCarriageTypes.CarriageTypes.carriage_type)</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <i class="bi bi-person-square"></i>
+                                            <span>Місце @ticket.Seat.seat_number</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <i class="bi bi-currency-exchange"></i>
+                                            <span>@ticket.total_price.ToString("F2") грн</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="booking-info">
+                                        <span class="booking-date">Заброньовано: @ticket.booking_date.ToString("dd.MM.yyyy")</span>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div> *@
+@model train2.Models.Client
+@{
+    ViewData["Title"] = "Особистий кабінет";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/account/profile.css" />
+}
+
+<div class="profile-container">
+    <!-- Секція профілю з аватаром та основною інформацією -->
+    <div class="profile-header">
+        <div class="user-avatar">
+            <div class="avatar-image">
+                <i class="bi bi-person-circle"></i>
+            </div>
+            <div class="avatar-info">
+                <h3>@Model.client_surname @Model.client_name</h3>
+                <p class="phone-number">@(Model.phone_number ?? "Номер телефону не вказано")</p>
+                <p class="email">@(Model.email ?? "Електронна пошта не вказана")</p>
+                <button type="button" class="btn btn-outline-primary edit-profile-btn" data-bs-toggle="modal" data-bs-target="#profileEditModal">
+                    <i class="bi bi-pencil"></i> Змінити дані
+                </button>
+            </div>
+        </div>
+        <div class="profile-actions">
+            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary me-2">
+                <i class="bi bi-house"></i> Повернутися в меню
+            </a>
+            <a asp-controller="Account" asp-action="Logout" class="btn btn-outline-danger">
+                <i class="bi bi-box-arrow-right"></i> Вийти
+            </a>
+        </div>
+        @* <div class="profile-actions">
+            <a asp-controller="Account" asp-action="Logout" class="btn btn-outline-danger">
+                <i class="bi bi-box-arrow-right"></i> Вийти
+            </a>
+        </div> *@
+    </div>
+
+    <!-- Навігація по вкладках (убираем платежную информацию) -->
+    <div class="profile-tabs">
+        <ul class="nav nav-tabs" id="profileTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="tickets-tab" data-bs-toggle="tab" data-bs-target="#tickets" type="button"
+                        role="tab" aria-controls="tickets" aria-selected="true">
+                    <i class="bi bi-ticket-perforated"></i> Мої квитки
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button"
+                        role="tab" aria-controls="history" aria-selected="false">
+                    <i class="bi bi-clock-history"></i> Історія подорожей
+                </button>
+            </li>
+        </ul>
+
+        <!-- Вміст вкладок -->
+        <div class="tab-content" id="profileTabsContent">
+
+            <!-- Вкладка "Мої квитки" -->
+            <div class="tab-pane fade show active" id="tickets" role="tabpanel" aria-labelledby="tickets-tab">
+                <div class="tab-header">
+                    <h4>Активні квитки</h4>
+                </div>
+
+                @if (ViewBag.ActiveTickets == null || ((List<train2.Models.Ticket>)ViewBag.ActiveTickets).Count == 0)
+                {
+                    <div class="empty-state">
+                        <div class="empty-icon">🎫</div>
+                        <h5>Поки немає квитків</h5>
+                        <p>Подорожі чекають на вас!</p>
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-primary">
+                            <i class="bi bi-search"></i> Шукати квитки
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    <div class="tickets-list">
+                        @foreach (var ticket in (List<train2.Models.Ticket>)ViewBag.ActiveTickets)
+                        {
+                            // Получаем времена отправления и прибытия
+                            var departureTime = ticket.Schedule.departure_time;
+                            var arrivalTime = ticket.Schedule.departure_time; // по умолчанию
+
+                            // Пытаемся получить реальные времена из StationSequences
+                            if (ticket.Schedule.Train.StationSequences != null && ticket.Schedule.Train.StationSequences.Any())
+                            {
+                                var sequences = ticket.Schedule.Train.StationSequences.ToList();
+                                if (sequences.Count >= 2)
+                                {
+                                    departureTime = sequences.First().travel_duration;
+                                    arrivalTime = sequences.Last().travel_duration;
+                                }
+                            }
+
+                            <div class="ticket-card modern">
+                                <div class="ticket-header">
+                                    <div class="train-info">
+                                        <span class="train-number">Потяг №@ticket.Schedule.Train.train_number</span>
+                                        <span class="ticket-id">#@ticket.ticket_id</span>
+                                    </div>
+                                    <span class="ticket-status @(ticket.Transactions != null && ticket.Transactions.Any() ? "paid" : "booked")">
+                                        @(ticket.Transactions != null && ticket.Transactions.Any() ? "Оплачений" : "Заброньований")
+                                    </span>
+                                </div>
+
+                                <div class="ticket-body">
+                                    <div class="route-section">
+                                        <div class="route-header">
+                                            <h6><i class="bi bi-geo-alt"></i> Маршрут</h6>
+                                        </div>
+                                        <div class="route-details">
+                                            <div class="station-info">
+                                                <div class="station from">
+                                                    <span class="station-name">@(ticket.FromStation?.station_name ?? "Невідомо")</span>
+                                                    <span class="time">@departureTime.ToString(@"hh\:mm")</span>
+                                                </div>
+                                                <div class="route-line">
+                                                    <div class="line"></div>
+                                                    <i class="bi bi-arrow-right"></i>
+                                                </div>
+                                                <div class="station to">
+                                                    <span class="station-name">@(ticket.ToStation?.station_name ?? "Невідомо")</span>
+                                                    <span class="time">@arrivalTime.ToString(@"hh\:mm")</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="travel-details">
+                                        <div class="detail-item">
+                                            <i class="bi bi-calendar-event"></i>
+                                            <span>@ticket.Schedule.date.ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("uk-UA"))</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <i class="bi bi-train-lightrail"></i>
+                                            <span>Вагон @ticket.Seat.TrainCarriageTypes.carriage_number (@ticket.Seat.TrainCarriageTypes.CarriageTypes.carriage_type)</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <i class="bi bi-person-square"></i>
+                                            <span>Місце @ticket.Seat.seat_number</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <i class="bi bi-currency-exchange"></i>
+                                            <span>@ticket.total_price.ToString("F2") грн</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="booking-info">
+                                        <span class="booking-date">Заброньовано: @ticket.booking_date.ToString("dd.MM.yyyy")</span>
+                                    </div>
+                                </div>
+
+@*                                 @if (ticket.Transactions == null || !ticket.Transactions.Any())
+                                {
+                                    <div class="ticket-actions">
+                                        <button class="btn btn-success btn-sm pay-ticket-btn" data-ticket-id="@ticket.ticket_id">
+                                            <i class="bi bi-credit-card"></i> Оплатити
+                                        </button>
+                                        <button class="btn btn-outline-danger btn-sm cancel-ticket-btn" data-ticket-id="@ticket.ticket_id">
+                                            <i class="bi bi-x-circle"></i> Скасувати
+                                        </button>
+                                    </div>
+                                } *@
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- Вкладка "Історія подорожей" -->
+            <div class="tab-pane fade" id="history" role="tabpanel" aria-labelledby="history-tab">
+                <div class="tab-header">
+                    <h4>Історія подорожей</h4>
+                </div>
+
+                @if (ViewBag.HistoricalTickets == null || ((List<train2.Models.Ticket>)ViewBag.HistoricalTickets).Count == 0)
+                {
+                    <div class="empty-state">
+                        <div class="empty-icon">📚</div>
+                        <h5>Історія подорожей порожня</h5>
+                        <p>Ваші завершені подорожі з'являться тут</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="tickets-list">
+                        @foreach (var ticket in (List<train2.Models.Ticket>)ViewBag.HistoricalTickets)
+                        {
+                            // Получаем времена отправления и прибытия для исторических билетов
+                            var histDepartureTime = ticket.Schedule.departure_time;
+                            var histArrivalTime = ticket.Schedule.departure_time;
+
+                            if (ticket.Schedule.Train.StationSequences != null && ticket.Schedule.Train.StationSequences.Any())
+                            {
+                                var sequences = ticket.Schedule.Train.StationSequences.ToList();
+                                if (sequences.Count >= 2)
+                                {
+                                    histDepartureTime = sequences.First().travel_duration;
+                                    histArrivalTime = sequences.Last().travel_duration;
+                                }
+                            }
+
+                            <div class="ticket-card historical">
+                                <div class="ticket-header">
+                                    <div class="train-info">
+                                        <span class="train-number">Потяг №@ticket.Schedule.Train.train_number</span>
+                                        <span class="ticket-id">#@ticket.ticket_id</span>
+                                    </div>
+                                    <span class="ticket-status @(ticket.Transactions != null && ticket.Transactions.Any() ? "paid" : "not-paid")">
+                                        @(ticket.Transactions != null && ticket.Transactions.Any() ? "Був оплачений" : "Не був оплачений")
+                                    </span>
+                                </div>
+
+                                <div class="ticket-body">
+                                    <div class="route-section">
+                                        <div class="route-header">
+                                            <h6><i class="bi bi-geo-alt"></i> Маршрут</h6>
+                                        </div>
+                                        <div class="route-details">
+                                            <div class="station-info">
+                                                <div class="station from">
+                                                    <span class="station-name">@(ticket.FromStation?.station_name ?? "Невідомо")</span>
+                                                    <span class="time">@histDepartureTime.ToString(@"hh\:mm")</span>
+                                                </div>
+                                                <div class="route-line">
+                                                    <div class="line"></div>
+                                                    <i class="bi bi-arrow-right"></i>
+                                                </div>
+                                                <div class="station to">
+                                                    <span class="station-name">@(ticket.ToStation?.station_name ?? "Невідомо")</span>
+                                                    <span class="time">@histArrivalTime.ToString(@"hh\:mm")</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="travel-details">
+                                        <div class="detail-item">
+                                            <i class="bi bi-calendar-event"></i>
+                                            <span>@ticket.Schedule.date.ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("uk-UA"))</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <i class="bi bi-train-lightrail"></i>
+                                            <span>Вагон @ticket.Seat.TrainCarriageTypes.carriage_number (@ticket.Seat.TrainCarriageTypes.CarriageTypes.carriage_type)</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <i class="bi bi-person-square"></i>
+                                            <span>Місце @ticket.Seat.seat_number</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <i class="bi bi-currency-exchange"></i>
+                                            <span>@ticket.total_price.ToString("F2") грн</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="booking-info">
+                                        <span class="booking-date">Заброньовано: @ticket.booking_date.ToString("dd.MM.yyyy")</span>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Улучшенное модальное окно для редактирования профиля -->
+<div class="modal fade" id="profileEditModal" tabindex="-1" aria-labelledby="profileEditModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="profileEditModalLabel">
+                    <i class="bi bi-person-gear"></i> Редагування профілю
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" action="@Url.Action("UpdateProfile", "Account")" id="editProfileForm">
+                    <input type="hidden" name="client_id" value="@Model.client_id" />
+                    <input type="hidden" name="login" value="@Model.login" />
+
+                    <!-- Основная информация -->
+                    <h6 class="text-primary mb-3">
+                        <i class="bi bi-person"></i> Особиста інформація
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="client_name" class="form-label">Ім'я *</label>
+                            <input type="text" class="form-control" id="client_name" name="client_name" value="@Model.client_name" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="client_surname" class="form-label">Прізвище *</label>
+                            <input type="text" class="form-control" id="client_surname" name="client_surname" value="@Model.client_surname" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="client_patronymic" class="form-label">По-батькові *</label>
+                            <input type="text" class="form-control" id="client_patronymic" name="client_patronymic" value="@Model.client_patronymic" required>
+                        </div>
+                    </div>
+
+                    <!-- Контактная информация -->
+                    <h6 class="text-primary mb-3">
+                        <i class="bi bi-telephone"></i> Контактна інформація
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">Електронна пошта</label>
+                            <input type="email" class="form-control" id="email" name="email" value="@Model.email">
+                            <div class="form-text">Необов'язково</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="phone_number" class="form-label">Номер телефону</label>
+                            <input type="text" class="form-control" id="phone_number" name="phone_number"
+                                   value="@Model.phone_number"
+                                   pattern="\+380\((50|63|67|68|93|95|96|97|98)\)[0-9]{7}"
+                                   placeholder="+380(67)1234567">
+                            <div class="form-text">Формат: +380(XX)XXXXXXX</div>
+                        </div>
+                    </div>
+
+                    <!-- Платежная информация -->
+                    <h6 class="text-primary mb-3">
+                        <i class="bi bi-credit-card"></i> Платіжна інформація
+                    </h6>
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Тип оплати</label>
+                            <select id="editPaymentType" class="form-select">
+                                <option value="">Вибрати тип оплати</option>
+                                <option value="card">Банківська карта</option>
+                                <option value="iban">IBAN рахунок</option>
+                                <option value="cash">Готівкою</option>
+                                <option value="none">Без платіжної інформації</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Контейнер для платежной информации -->
+                    <div id="editPaymentContainer">
+                        <!-- Поля для банківської карти -->
+                        <div id="editCardContainer" class="payment-section" style="display: none;">
+                            <div class="row">
+                                <div class="col-12 mb-2">
+                                    <label for="editCardNumber" class="form-label">Номер карти</label>
+                                    <input type="text" id="editCardNumber" class="form-control"
+                                           placeholder="1111 1111 1111 1111"
+                                           maxlength="19" />
+                                </div>
+                                <div class="col-6">
+                                    <label for="editCardMonth" class="form-label">Місяць</label>
+                                    <input type="text" id="editCardMonth" class="form-control"
+                                           placeholder="MM" maxlength="2" />
+                                </div>
+                                <div class="col-6">
+                                    <label for="editCardYear" class="form-label">Рік</label>
+                                    <input type="text" id="editCardYear" class="form-control"
+                                           placeholder="YY" maxlength="2" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Поле для IBAN -->
+                        <div id="editIbanContainer" class="payment-section" style="display: none;">
+                            <label for="editIbanField" class="form-label">IBAN</label>
+                            <input type="text" id="editIbanField" class="form-control"
+                                   placeholder="UA21 3223 1300 0002 6007 2335 6600 1"
+                                   maxlength="34" />
+                        </div>
+
+                        <!-- Текущая платежная информация -->
+                        <div id="currentPaymentInfo" class="mb-3">
+                            <label class="form-label">Поточна платіжна інформація</label>
+                            <div class="form-control bg-light" style="min-height: 60px;">
+                                @(Model.payment_info ?? "Немає платіжної інформації")
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Скрытое поле для платежной информации -->
+                    <input type="hidden" name="payment_info" id="editHiddenPaymentInfo" value="@Model.payment_info" />
+
+                    <div class="form-actions d-flex justify-content-end gap-2 mt-4">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle"></i> Скасувати
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Зберегти зміни
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Парсинг существующей платежной информации при загрузке модального окна
+        $('#profileEditModal').on('show.bs.modal', function () {
+            const currentPaymentInfo = '@Html.Raw(Model.payment_info ?? "")';
+            parseExistingPaymentInfo(currentPaymentInfo);
+        });
+
+        function parseExistingPaymentInfo(paymentInfo) {
+            if (!paymentInfo) {
+                document.getElementById('editPaymentType').value = 'none';
+                return;
+            }
+
+            // Парсим карты (Card: XXXX XXXX XXXX XXXX Valid: MM/YY)
+            const cardPattern = /Card:\s*(\d{4}\s*\d{4}\s*\d{4}\s*\d{4})\s*Valid:\s*(\d{2})\/(\d{2})/i;
+            const cardMatch = paymentInfo.match(cardPattern);
+
+            if (cardMatch) {
+                document.getElementById('editPaymentType').value = 'card';
+                document.getElementById('editCardNumber').value = cardMatch[1];
+                document.getElementById('editCardMonth').value = cardMatch[2];
+                document.getElementById('editCardYear').value = cardMatch[3];
+                showPaymentSection('card', 'edit');
+                return;
+            }
+
+            // Парсим IBAN
+            const ibanPattern = /IBAN:\s*([A-Z0-9\s]+)/i;
+            const ibanMatch = paymentInfo.match(ibanPattern);
+
+            if (ibanMatch) {
+                document.getElementById('editPaymentType').value = 'iban';
+                document.getElementById('editIbanField').value = ibanMatch[1].trim();
+                showPaymentSection('iban', 'edit');
+                return;
+            }
+
+            // Если содержит "Cash" или "Готівка"
+            if (paymentInfo.toLowerCase().includes('cash') || paymentInfo.toLowerCase().includes('готівка')) {
+                document.getElementById('editPaymentType').value = 'cash';
+                return;
+            }
+
+            // По умолчанию - другой тип
+            document.getElementById('editPaymentType').value = '';
+        }
+
+        // Обработка изменения типа платежа
+        document.getElementById('editPaymentType').addEventListener('change', function () {
+            const paymentType = this.value;
+            showPaymentSection(paymentType, 'edit');
+            updateHiddenPaymentField('edit');
+        });
+
+        function showPaymentSection(type, prefix) {
+            // Скрываем все секции
+            document.getElementById(prefix + 'CardContainer').style.display = 'none';
+            document.getElementById(prefix + 'IbanContainer').style.display = 'none';
+
+            // Показываем нужную секцию
+            if (type === 'card') {
+                document.getElementById(prefix + 'CardContainer').style.display = 'block';
+            } else if (type === 'iban') {
+                document.getElementById(prefix + 'IbanContainer').style.display = 'block';
+            }
+        }
+
+        // Обновление скрытого поля при изменении данных карты или IBAN
+        document.addEventListener('input', function (e) {
+            if (e.target.id.includes('Card') || e.target.id.includes('Iban')) {
+                updateHiddenPaymentField('edit');
+            }
+        });
+
+        function updateHiddenPaymentField(prefix) {
+            const paymentType = document.getElementById(prefix + 'PaymentType').value;
+            let paymentInfo = '';
+
+            if (paymentType === 'card') {
+                const cardNumber = document.getElementById(prefix + 'CardNumber').value;
+                const cardMonth = document.getElementById(prefix + 'CardMonth').value;
+                const cardYear = document.getElementById(prefix + 'CardYear').value;
+
+                if (cardNumber && cardMonth && cardYear) {
+                    paymentInfo = `Card: ${cardNumber} Valid: ${cardMonth}/${cardYear}`;
+                }
+            } else if (paymentType === 'iban') {
+                const iban = document.getElementById(prefix + 'IbanField').value;
+                if (iban) {
+                    paymentInfo = `IBAN: ${iban}`;
+                }
+            } else if (paymentType === 'cash') {
+                paymentInfo = 'Cash Payment / Готівкова оплата';
+            }
+
+            document.getElementById(prefix + 'HiddenPaymentInfo').value = paymentInfo;
+        }
+
+        // Форматирование номера карты
+        document.getElementById('editCardNumber').addEventListener('input', function (e) {
+            let value = e.target.value.replace(/\D/g, '');
+            value = value.replace(/(\d{4})(?=\d)/g, '$1 ');
+            e.target.value = value;
+        });
+
+        // Валидация полей
+        document.getElementById('editCardMonth').addEventListener('input', function (e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 0) {
+                value = Math.min(12, Math.max(1, parseInt(value))).toString().padStart(2, '0');
+            }
+            e.target.value = value;
+        });
+
+        document.getElementById('editCardYear').addEventListener('input', function (e) {
+            e.target.value = e.target.value.replace(/\D/g, '');
+        });
+    </script>
+}

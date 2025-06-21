@@ -1,0 +1,206 @@
+﻿/* Основні стилі */
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f8f9fa;
+}
+
+/* Стилі для хедера */
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 40px;
+    background-color: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.logo a {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #1a3dc1;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.top-nav {
+    display: flex;
+    align-items: center;
+}
+
+.user-menu {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.nav-button {
+    background-color: #1a3dc1;
+    color: white;
+    padding: 8px 16px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: 500;
+}
+
+    .nav-button:hover {
+        background-color: #0f2fa1;
+        color: white;
+    }
+
+/* Стилі для контейнера пошуку */
+.search-container {
+    max-width: 1000px;
+    margin: 0 auto 40px;
+    padding: 0 20px;
+}
+
+.search-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+    .search-header h2 {
+        margin: 0;
+        color: #333;
+    }
+
+.back-button {
+    color: #1a3dc1;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+    .back-button:hover {
+        text-decoration: underline;
+    }
+
+.route-info {
+    background-color: white;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.route-details {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.from, .to {
+    font-weight: bold;
+    color: #1a3dc1;
+}
+
+.date {
+    color: #666;
+}
+
+.manager-badge {
+    background-color: #28a745;
+    color: white;
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Стилі для відсутності результатів */
+.no-results {
+    background-color: white;
+    border-radius: 8px;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+    .no-results i {
+        font-size: 3rem;
+        color: #dc3545;
+        margin-bottom: 15px;
+    }
+
+    .no-results p {
+        color: #666;
+        margin-bottom: 20px;
+    }
+
+.search-button {
+    background-color: #1a3dc1;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 5px;
+    text-decoration: none;
+    display: inline-block;
+}
+
+    .search-button:hover {
+        background-color: #0f2fa1;
+        color: white;
+    }
+
+/* Стилі для списку результатів */
+.results-list {
+    background-color: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.trains-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+    .trains-table th, .trains-table td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+
+    .trains-table th {
+        background-color: #f8f9fa;
+        color: #333;
+        font-weight: 600;
+    }
+
+    .trains-table tr:hover {
+        background-color: #f5f8ff;
+    }
+
+.train-number {
+    font-weight: bold;
+    color: #1a3dc1;
+}
+
+.manager-book-btn {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+    .manager-book-btn:hover {
+        background-color: #218838;
+        color: white;
+        text-decoration: none;
+    }

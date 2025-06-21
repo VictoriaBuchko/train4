@@ -1,0 +1,175 @@
+﻿@model List<train2.Models.Stations>
+@{
+    ViewData["Title"] = "Управління станціями";
+}
+
+<style>
+    /* Базовые стили */
+    .text-primary {
+        color: #1a3dc1 !important;
+    }
+
+    /* Карточка */
+    .card {
+        background: white;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        border: 1px solid #ddd;
+    }
+
+    /* Стили для таблицы */
+    .table {
+        background: white;
+        border-radius: 5px;
+        overflow: hidden;
+        font-family: 'Segoe UI', sans-serif;
+        border: none;
+        margin-bottom: 0;
+    }
+
+        .table th {
+            background-color: #1a3dc1;
+            color: white;
+            padding: 12px;
+            border: none;
+            font-weight: 600;
+        }
+
+        .table td {
+            padding: 10px 12px;
+            border: none;
+            vertical-align: middle;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+    .table-striped > tbody > tr:nth-of-type(odd) > td {
+        background-color: #f8f9fa;
+    }
+
+    /* Кнопки */
+    .btn {
+        padding: 8px 16px;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .btn-sm {
+        padding: 6px 14px;
+        font-size: 0.875rem;
+    }
+
+        .btn-outline-warning, .btn-sm.btn-outline-warning {
+            background-color: #ffc107;
+            border-color: #ffc107;
+            color: #333;
+        }
+
+            .btn-outline-warning:hover {
+                background-color: #e0a800;
+                border-color: #e0a800;
+            }
+
+        .btn-outline-danger, .btn-sm.btn-outline-danger {
+            background-color: #dc3545;
+            border-color: #dc3545;
+            color: white;
+        }
+
+            .btn-outline-danger:hover {
+                background-color: #c82333;
+                border-color: #c82333;
+            }
+
+    .btn-success {
+        background-color: #1a3dc1;
+        border-color: #1a3dc1;
+    }
+
+        .btn-success:hover {
+            background-color: #0f2fa1;
+            border-color: #0f2fa1;
+        }
+
+    /* Алерты */
+    .alert {
+        border-radius: 5px;
+        border: none;
+    }
+</style>
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between mb-3 align-items-center">
+        <h2 class="text-primary">
+            <i class="bi bi-geo-alt"></i> Управління станціями
+        </h2>
+        <a asp-controller="Admin" asp-action="AdminMenu" class="btn btn-outline-dark">
+            <i class="bi bi-arrow-left-circle"></i> Назад до меню адміністратора
+        </a>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+            @if (TempData["ResultMessage"] != null)
+            {
+                <div class="alert alert-info">@TempData["ResultMessage"]</div>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+            }
+
+            <table class="table table-striped align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Назва станції</th>
+                        <th class="text-center">Дії</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var station in Model)
+                    {
+                        <tr>
+                            <td>@station.station_id</td>
+                            <td>
+                                <form asp-action="UpdateStationName" asp-controller="Admin" method="post" class="d-flex align-items-center">
+                                    <input type="hidden" name="stationId" value="@station.station_id" />
+                                    <input type="text" name="newName" class="form-control me-2" value="@station.station_name" required />
+                                    <button type="submit" class="btn btn-outline-warning btn-sm">
+                                        <i class="bi bi-pencil-square"></i> Зберегти
+                                    </button>
+                                </form>
+                            </td>
+                            <td class="text-center">
+                                <form asp-action="DeleteStation" asp-controller="Admin" method="post" class="d-inline" onsubmit="return confirm('Ви впевнені, що хочете видалити цю станцію?');">
+                                    <input type="hidden" name="stationId" value="@station.station_id" />
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                                        <i class="bi bi-trash"></i> Видалити
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <hr />
+
+            <h5 class="mb-3">Додати нову станцію</h5>
+            <form asp-action="AddStation" asp-controller="Admin" method="post" class="row g-3">
+                <div class="col-md-8">
+                    <input type="text" name="newStationName" class="form-control" placeholder="Назва станції" required />
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="bi bi-plus-circle"></i> Додати
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
